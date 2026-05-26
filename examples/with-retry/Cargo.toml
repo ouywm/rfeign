@@ -1,0 +1,10 @@
+[package]
+name = "example-with-retry"
+version.workspace = true
+edition.workspace = true
+publish = false
+
+[dependencies]
+feignx = { path = "../../feignx", features = ["retry"] }
+tokio.workspace = true
+serde.workspace = true

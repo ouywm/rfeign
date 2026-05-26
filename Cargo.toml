@@ -1,0 +1,49 @@
+[workspace]
+resolver = "2"
+members = [
+    "feignx-core",
+    "feignx-macros",
+    "feignx-reqwest",
+    "feignx",
+    "examples/basic",
+    "examples/imperative",
+    "examples/with-retry",
+    "examples/with-nacos",
+    "examples/file-upload",
+]
+
+[workspace.package]
+version = "0.0.1"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+authors = ["ouywm"]
+repository = "https://github.com/ouywm/feignx"
+categories = ["web-programming::http-client", "asynchronous"]
+keywords = ["http-client", "declarative", "feign", "microservice", "async"]
+
+[workspace.dependencies]
+feignx-core = { path = "feignx-core", version = "0.0.1" }
+feignx-macros = { path = "feignx-macros", version = "0.0.1" }
+feignx-reqwest = { path = "feignx-reqwest", version = "0.0.1" }
+http = "1.4"
+bytes = "1.11"
+async-trait = "0.1"
+thiserror = "2.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+futures-core = "0.3"
+syn = { version = "2.0", features = ["full"] }
+quote = "1.0"
+proc-macro2 = "1.0"
+darling = "0.23"
+reqwest = { version = "0.13", features = ["json"] }
+reqwest-middleware = "0.5"
+reqwest-retry = "0.9"
+reqwest-tracing = "0.7"
+backon = "1.6"
+failsafe = "1.3"
+nacos-sdk = "0.8"
+tokio = { version = "1.52", features = ["full"] }
+base64 = "0.22"
+erased-serde = "0.4"
+serde_urlencoded = "0.7"

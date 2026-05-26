@@ -1,0 +1,40 @@
+[package]
+name = "feignx"
+description = "A declarative HTTP client for Rust, inspired by OpenFeign"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[dependencies]
+feignx-core.workspace = true
+feignx-macros.workspace = true
+feignx-reqwest = { workspace = true, optional = true }
+serde.workspace = true
+serde_json = { workspace = true, optional = true }
+bytes.workspace = true
+http.workspace = true
+async-trait.workspace = true
+serde_urlencoded.workspace = true
+
+reqwest-middleware = { workspace = true, optional = true }
+reqwest-retry = { workspace = true, optional = true }
+reqwest-tracing = { workspace = true, optional = true }
+backon = { workspace = true, optional = true }
+failsafe = { workspace = true, optional = true }
+nacos-sdk = { workspace = true, optional = true }
+
+[features]
+default = ["reqwest", "json"]
+reqwest = ["dep:feignx-reqwest"]
+json = ["dep:serde_json"]
+retry = ["middleware", "dep:reqwest-retry", "dep:backon"]
+circuit-breaker = ["middleware", "dep:failsafe"]
+tracing = ["middleware", "dep:reqwest-tracing"]
+timeout = []
+middleware = ["dep:reqwest-middleware"]
+middleware-full = ["middleware", "retry", "circuit-breaker", "tracing", "timeout"]
+nacos = ["dep:nacos-sdk"]
