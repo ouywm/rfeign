@@ -1,8 +1,0 @@
-[
-  { "type": "file", "name": "parameters", "label": "参数属性" },
-  { "type": "file", "name": "resilience", "label": "弹性能力" },
-  { "type": "file", "name": "multipart", "label": "文件上传" },
-  { "type": "file", "name": "auth", "label": "认证" },
-  { "type": "file", "name": "logging", "label": "日志" },
-  { "type": "file", "name": "streaming", "label": "流式响应" }
-]

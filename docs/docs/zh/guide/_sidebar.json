@@ -1,6 +1,0 @@
-[
-  { "type": "file", "name": "getting-started", "label": "快速开始" },
-  { "type": "file", "name": "declarative", "label": "声明式 API" },
-  { "type": "file", "name": "imperative", "label": "命令式 API" },
-  { "type": "file", "name": "configuration", "label": "配置参考" }
-]

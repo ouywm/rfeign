@@ -1,0 +1,18 @@
+.rp-reading-time {
+  display: none;
+}
+
+.sa-reading-time {
+  position: relative;
+  top: -18px;
+  font-style: italic;
+  font-size: 15px;
+}
+
+.sa-reading-time[data-dark="true"] {
+  color: rgba(235, 235, 235, 0.56);
+}
+
+.sa-reading-time[data-dark="false"] {
+  color: rgba(60, 60, 60, 0.66);
+}

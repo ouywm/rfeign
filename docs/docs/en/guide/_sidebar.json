@@ -1,6 +1,0 @@
-[
-  { "type": "file", "name": "getting-started", "label": "Getting Started" },
-  { "type": "file", "name": "declarative", "label": "Declarative API" },
-  { "type": "file", "name": "imperative", "label": "Imperative API" },
-  { "type": "file", "name": "configuration", "label": "Configuration" }
-]

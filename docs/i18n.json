@@ -1,0 +1,22 @@
+{
+  "guide": {
+    "zh": "指南",
+    "en": "Guide"
+  },
+  "features": {
+    "zh": "功能",
+    "en": "Features"
+  },
+  "serviceDiscovery": {
+    "zh": "服务发现",
+    "en": "Service Discovery"
+  },
+  "gettingStarted": {
+    "zh": "快速开始",
+    "en": "Getting Started"
+  },
+  "github": {
+    "zh": "GitHub",
+    "en": "GitHub"
+  }
+}

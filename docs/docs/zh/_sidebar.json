@@ -1,0 +1,36 @@
+[
+  {
+    "type": "dir",
+    "name": "guide",
+    "label": "指南",
+    "items": [
+      { "type": "file", "name": "getting-started", "label": "快速开始" },
+      { "type": "file", "name": "declarative", "label": "声明式 API" },
+      { "type": "file", "name": "imperative", "label": "命令式 API" },
+      { "type": "file", "name": "configuration", "label": "配置参考" }
+    ]
+  },
+  {
+    "type": "dir",
+    "name": "features",
+    "label": "功能",
+    "items": [
+      { "type": "file", "name": "parameters", "label": "参数属性" },
+      { "type": "file", "name": "resilience", "label": "弹性能力" },
+      { "type": "file", "name": "multipart", "label": "文件上传" },
+      { "type": "file", "name": "auth", "label": "认证" },
+      { "type": "file", "name": "logging", "label": "日志" },
+      { "type": "file", "name": "streaming", "label": "流式响应" }
+    ]
+  },
+  {
+    "type": "dir",
+    "name": "service-discovery",
+    "label": "服务发现",
+    "items": [
+      { "type": "file", "name": "overview", "label": "概述" },
+      { "type": "file", "name": "nacos", "label": "Nacos" },
+      { "type": "file", "name": "consul", "label": "Consul" }
+    ]
+  }
+]

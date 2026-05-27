@@ -30,6 +30,9 @@ export default defineConfig({
   ssg: true,
   title: 'rfeign',
   description: 'Rust 声明式 HTTP 客户端',
+  route: {
+    exclude: ['components/**/*'],
+  },
   plugins: [
     pluginSitemap({
       siteUrl,

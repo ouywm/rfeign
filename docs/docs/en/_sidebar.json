@@ -1,0 +1,36 @@
+[
+  {
+    "type": "dir",
+    "name": "guide",
+    "label": "Guide",
+    "items": [
+      { "type": "file", "name": "getting-started", "label": "Getting Started" },
+      { "type": "file", "name": "declarative", "label": "Declarative API" },
+      { "type": "file", "name": "imperative", "label": "Imperative API" },
+      { "type": "file", "name": "configuration", "label": "Configuration" }
+    ]
+  },
+  {
+    "type": "dir",
+    "name": "features",
+    "label": "Features",
+    "items": [
+      { "type": "file", "name": "parameters", "label": "Parameters" },
+      { "type": "file", "name": "resilience", "label": "Resilience" },
+      { "type": "file", "name": "multipart", "label": "File Upload" },
+      { "type": "file", "name": "auth", "label": "Authentication" },
+      { "type": "file", "name": "logging", "label": "Logging" },
+      { "type": "file", "name": "streaming", "label": "Streaming" }
+    ]
+  },
+  {
+    "type": "dir",
+    "name": "service-discovery",
+    "label": "Service Discovery",
+    "items": [
+      { "type": "file", "name": "overview", "label": "Overview" },
+      { "type": "file", "name": "nacos", "label": "Nacos" },
+      { "type": "file", "name": "consul", "label": "Consul" }
+    ]
+  }
+]
