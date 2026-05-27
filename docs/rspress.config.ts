@@ -1,6 +1,10 @@
 import * as path from 'node:path';
 import { defineConfig } from '@rspress/core';
+import { pluginRss } from '@rspress/plugin-rss';
 import { pluginSitemap } from '@rspress/plugin-sitemap';
+import rspressPluginFileTree from 'rspress-plugin-file-tree';
+import rspressPluginMermaid from 'rspress-plugin-mermaid';
+import rspressPluginReadingTime from 'rspress-plugin-reading-time';
 
 const siteUrl = 'https://ouywm.github.io/rfeign/';
 
@@ -31,6 +35,20 @@ export default defineConfig({
       siteUrl,
       defaultChangeFreq: 'weekly',
     }),
+    pluginRss({
+      siteUrl,
+      output: { dir: 'rss', type: 'rss' },
+      feed: {
+        id: 'updates',
+        title: 'rfeign Docs Updates',
+        description: 'rfeign documentation updates',
+        language: 'zh-CN',
+        copyright: 'Copyright © 2026 rfeign',
+      },
+    }),
+    rspressPluginReadingTime({ defaultLocale: 'zh-CN' }),
+    rspressPluginMermaid({ mermaidConfig: { theme: 'neutral' } }),
+    rspressPluginFileTree({ initialExpandDepth: 2 }),
   ],
   themeConfig: {
     socialLinks: [
