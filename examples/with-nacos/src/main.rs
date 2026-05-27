@@ -9,6 +9,7 @@ pub struct User {
     pub user: UserVo,
     pub roles: Vec<RoleDetailVo>,
 }
+
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UserVo {
@@ -56,8 +57,8 @@ async fn main() -> feignx::Result<()> {
         .service_name("user_service")
         .build();
 
-    let _api = UserApiClient::new(client);
-    let u = _api.get_user(1).await?;
+    let api = UserApiClient::new(client);
+    let u = api.get_user(1).await?;
     println!("{:?}", u);
     println!(
         "NacosResolver configured for service: {:?}",

@@ -2,7 +2,7 @@ use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 use syn::{FnArg, Meta};
 
-use crate::param::{extract_params, Param, ParamKind};
+use crate::param::{extract_params, Param, ParamKind, QueryFormat};
 use crate::symbol::*;
 
 #[derive(Debug, Clone, Copy)]
@@ -168,7 +168,7 @@ fn build_query_chain(params: &[Param]) -> TokenStream {
     let calls: Vec<_> = params
         .iter()
         .filter_map(|p| {
-            let ParamKind::Query { name } = &p.kind else {
+            let ParamKind::Query { name, format } = &p.kind else {
                 return None;
             };
             let ident = &p.ident;
@@ -176,9 +176,17 @@ fn build_query_chain(params: &[Param]) -> TokenStream {
                 Some(n) => n.clone(),
                 None => ident.to_string(),
             };
-            Some(quote! {
-                .query_pair(#key, &feignx::serde_urlencoded::to_string(&#ident).unwrap_or_default())
-            })
+            match format {
+                QueryFormat::Multi => Some(quote! {
+                    .query_multi(#key, &#ident)
+                }),
+                QueryFormat::Csv => Some(quote! {
+                    .query_csv(#key, &#ident)
+                }),
+                QueryFormat::Default => Some(quote! {
+                    .query_pair(#key, &feignx::serde_urlencoded::to_string(&#ident).unwrap_or_default())
+                }),
+            }
         })
         .collect();
 

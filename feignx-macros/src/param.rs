@@ -5,11 +5,19 @@ use crate::symbol::*;
 #[derive(Debug, Clone)]
 pub enum ParamKind {
     Path { name: String },
-    Query { name: Option<String> },
+    Query { name: Option<String>, format: QueryFormat },
     Body,
     Header { name: String },
     Headers,
     Part { name: String },
+}
+
+#[derive(Debug, Clone, Default)]
+pub enum QueryFormat {
+    #[default]
+    Default,
+    Multi,
+    Csv,
 }
 
 #[derive(Debug, Clone)]
@@ -51,7 +59,8 @@ fn resolve_kind(attrs: &[syn::Attribute], ident: &syn::Ident) -> ParamKind {
             return ParamKind::Path { name };
         }
         if *path == QUERY {
-            return ParamKind::Query { name: parse_name_arg(attr) };
+            let (name, format) = parse_query_args(attr);
+            return ParamKind::Query { name, format };
         }
         if *path == BODY {
             return ParamKind::Body;
@@ -86,4 +95,36 @@ fn parse_name_arg(attr: &syn::Attribute) -> Option<String> {
         }
         _ => None,
     }
+}
+
+fn parse_query_args(attr: &syn::Attribute) -> (Option<String>, QueryFormat) {
+    let mut name = None;
+    let mut format = QueryFormat::Default;
+
+    if let Meta::List(list) = &attr.meta {
+        let tokens = list.tokens.to_string();
+        for part in tokens.split(',') {
+            let part = part.trim();
+            if let Some(val) = part.strip_prefix("name") {
+                let val = val.trim().trim_start_matches('=').trim().trim_matches('"');
+                if !val.is_empty() {
+                    name = Some(val.to_string());
+                }
+            } else if let Some(val) = part.strip_prefix("format") {
+                let val = val.trim().trim_start_matches('=').trim().trim_matches('"');
+                format = match val {
+                    "multi" => QueryFormat::Multi,
+                    "csv" => QueryFormat::Csv,
+                    _ => QueryFormat::Default,
+                };
+            } else {
+                let val = part.trim_matches('"');
+                if !val.is_empty() {
+                    name = Some(val.to_string());
+                }
+            }
+        }
+    }
+
+    (name, format)
 }

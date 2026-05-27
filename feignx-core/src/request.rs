@@ -90,6 +90,32 @@ impl RequestBuilder {
         self
     }
 
+    pub fn query_multi<I, V>(mut self, key: &str, values: I) -> Self
+    where
+        I: IntoIterator<Item = V>,
+        V: ToString,
+    {
+        for v in values {
+            self.query.push((key.to_string(), v.to_string()));
+        }
+        self
+    }
+
+    pub fn query_csv<I, V>(mut self, key: &str, values: I) -> Self
+    where
+        I: IntoIterator<Item = V>,
+        V: ToString,
+    {
+        let csv: String = values.into_iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<_>>()
+            .join(",");
+        if !csv.is_empty() {
+            self.query.push((key.to_string(), csv));
+        }
+        self
+    }
+
     pub fn headers_map(mut self, map: &std::collections::HashMap<String, String>) -> Self {
         for (k, v) in map {
             if let (Ok(n), Ok(val)) = (
@@ -270,5 +296,20 @@ impl RawResponse {
             return Err(self.client.error_decoder().decode(status, &Default::default(), &body));
         }
         Ok(())
+    }
+
+    pub fn api_response<T: DeserializeOwned>(self) -> Result<crate::response::ApiResponse<T>> {
+        let status = self.status();
+        let headers = self.response.headers().clone();
+        let body = self.response.into_body();
+        if !self.client.is_success(status) {
+            return Err(self.client.error_decoder().decode(status, &Default::default(), &body));
+        }
+        let decoded: T = if body.is_empty() {
+            self.client.decode_response(b"null")?
+        } else {
+            self.client.decode_response(&body)?
+        };
+        Ok(crate::response::ApiResponse::new(status, headers, decoded))
     }
 }

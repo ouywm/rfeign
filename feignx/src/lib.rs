@@ -20,6 +20,7 @@ pub use resolver_ext::*;
 pub use feignx_core::client::{Client, ClientBuilder};
 pub use feignx_core::error::{Error, Result};
 pub use feignx_core::log::LogLevel;
+pub use feignx_core::log::LoggingMiddleware;
 
 pub use ::bytes;
 pub use ::http;
