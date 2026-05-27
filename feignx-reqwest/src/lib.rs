@@ -53,8 +53,13 @@ impl Transport for ReqwestTransport {
             .map_err(|e| Error::Transport(Box::new(e)))?;
 
         let mut response = Response::builder().status(status);
-        *response.headers_mut().unwrap() = headers;
-        let response = response.body(body).unwrap();
+        if let Some(h) = response.headers_mut() {
+            *h = headers;
+        }
+        let response = match response.body(body) {
+            Ok(r) => r,
+            Err(e) => return Err(Error::Other(e.to_string())),
+        };
 
         Ok(response)
     }

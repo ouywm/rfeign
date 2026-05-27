@@ -1,10 +1,10 @@
 [package]
 name = "example-with-nacos"
-version.workspace = true
-edition.workspace = true
+version = { workspace = true }
+edition = { workspace = true }
 publish = false
 
 [dependencies]
-feignx = { path = "../../feignx", features = ["nacos"] }
-tokio.workspace = true
-serde.workspace = true
+feignx = { workspace = true, features = ["nacos"] }
+tokio = { workspace = true }
+serde = { workspace = true }

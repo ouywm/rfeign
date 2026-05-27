@@ -24,10 +24,11 @@ impl BearerAuth {
 #[async_trait]
 impl Auth for BearerAuth {
     async fn authenticate(&self, request: &mut Request<Bytes>) -> Result<()> {
-        request.headers_mut().insert(
-            "Authorization",
-            format!("Bearer {}", self.token).parse().unwrap(),
-        );
+        let value: http::HeaderValue = match format!("Bearer {}", self.token).parse() {
+            Ok(v) => v,
+            Err(e) => return Err(crate::error::Error::Other(e.to_string())),
+        };
+        request.headers_mut().insert("Authorization", value);
         Ok(())
     }
 }
@@ -52,10 +53,11 @@ impl Auth for BasicAuth {
         use base64::Engine;
         let credentials = base64::engine::general_purpose::STANDARD
             .encode(format!("{}:{}", self.username, self.password));
-        request.headers_mut().insert(
-            "Authorization",
-            format!("Basic {}", credentials).parse().unwrap(),
-        );
+        let value: http::HeaderValue = match format!("Basic {}", credentials).parse() {
+            Ok(v) => v,
+            Err(e) => return Err(crate::error::Error::Other(e.to_string())),
+        };
+        request.headers_mut().insert("Authorization", value);
         Ok(())
     }
 }

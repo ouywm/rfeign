@@ -1,10 +1,10 @@
 [package]
 name = "example-imperative"
-version.workspace = true
-edition.workspace = true
+version = { workspace = true }
+edition = { workspace = true }
 publish = false
 
 [dependencies]
-feignx = { path = "../../feignx" }
-tokio.workspace = true
-serde.workspace = true
+feignx = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }

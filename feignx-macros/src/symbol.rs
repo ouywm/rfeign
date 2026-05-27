@@ -17,10 +17,10 @@ impl PartialEq<Symbol> for syn::Path {
 
 impl Symbol {
     pub fn matches_last_segment(&self, path: &syn::Path) -> bool {
-        path.segments
-            .last()
-            .map(|s| s.ident == self.0)
-            .unwrap_or(false)
+        match path.segments.last() {
+            Some(seg) => seg.ident == self.0,
+            None => false,
+        }
     }
 }
 

@@ -1,8 +1,10 @@
 use proc_macro::TokenStream;
 
-mod codegen;
-mod model;
-mod parse;
+mod client;
+mod method;
+mod multipart;
+mod param;
+mod request_param;
 mod symbol;
 
 /// Declares a declarative HTTP client from a trait definition.
@@ -23,7 +25,7 @@ mod symbol;
 /// ```
 #[proc_macro_attribute]
 pub fn http_client(attr: TokenStream, item: TokenStream) -> TokenStream {
-    parse::expand_http_client(attr, item)
+    client::expand(attr, item)
 }
 
 macro_rules! define_method_macro {

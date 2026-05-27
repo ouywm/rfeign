@@ -1,3 +1,5 @@
+pub mod http;
+
 use feignx::ReqwestTransport;
 use feignx::client::ClientBuilder;
 use serde::{Deserialize, Serialize};
