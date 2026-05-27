@@ -13,6 +13,10 @@ keywords = { workspace = true }
 [lib]
 proc-macro = true
 
+[features]
+default = []
+summer = []
+
 [dependencies]
 syn = { workspace = true }
 quote = { workspace = true }

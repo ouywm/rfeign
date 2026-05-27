@@ -34,6 +34,7 @@ circuit-breaker = ["rfeign-core/circuit-breaker"]
 middleware-full = ["retry", "tracing", "circuit-breaker"]
 nacos = ["dep:nacos-sdk"]
 consul = ["dep:rs-consul"]
+summer = ["rfeign-macros/summer"]
 
 [dev-dependencies]
 tokio = { workspace = true }

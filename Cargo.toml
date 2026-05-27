@@ -5,6 +5,7 @@ members = [
     "rfeign-macros",
     "rfeign-reqwest",
     "rfeign",
+    "summer-rfeign",
     "examples/basic",
     "examples/imperative",
     "examples/with-retry",

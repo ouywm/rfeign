@@ -49,6 +49,8 @@ pub fn expand(attr: TokenStream, item: TokenStream) -> TokenStream {
     let methods = endpoints.iter().map(|e| method::generate(e, &class_headers));
     let metadata = build_metadata_methods(&client_attr);
 
+    let component_registration = build_summer_registration(&struct_name);
+
     let output = quote! {
         #[rfeign::async_trait]
         #clean_trait
@@ -70,6 +72,8 @@ pub fn expand(attr: TokenStream, item: TokenStream) -> TokenStream {
         impl #trait_name for #struct_name {
             #(#methods)*
         }
+
+        #component_registration
     };
 
     output.into()
@@ -138,4 +142,29 @@ pub fn extract_class_headers(input: &ItemTrait) -> Vec<(String, String)> {
         }
     }
     headers
+}
+
+#[cfg(feature = "summer")]
+fn build_summer_registration(struct_name: &syn::Ident) -> proc_macro2::TokenStream {
+    quote! {
+        impl summer_rfeign::summer::plugin::service::Service for #struct_name {
+            fn build<R>(registry: &R) -> summer_rfeign::summer::error::Result<Self>
+            where
+                R: summer_rfeign::summer::plugin::ComponentRegistry
+                    + summer_rfeign::summer::config::ConfigRegistry,
+            {
+                let client = registry
+                    .get_component::<rfeign::client::Client>()
+                    .expect("rfeign Client not registered. Add RfeignPlugin first.");
+                Ok(Self::new(client))
+            }
+        }
+
+        summer_rfeign::summer::submit_service!(#struct_name);
+    }
+}
+
+#[cfg(not(feature = "summer"))]
+fn build_summer_registration(_struct_name: &syn::Ident) -> proc_macro2::TokenStream {
+    quote! {}
 }
