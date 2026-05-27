@@ -132,7 +132,7 @@ impl RequestBuilder {
     }
 
     pub async fn send(self) -> Result<RawResponse> {
-        let base = self.client.url_resolver().resolve("").await?;
+        let base = self.client.resolve_base_url().await?;
         let url = self.build_url(&base);
 
         let mut builder = Request::builder().method(self.method).uri(&url);
@@ -185,7 +185,7 @@ impl RequestBuilder {
     }
 
     pub async fn send_streaming(self) -> Result<crate::transport::StreamingResponse> {
-        let base = self.client.url_resolver().resolve("").await?;
+        let base = self.client.resolve_base_url().await?;
         let url = self.build_url(&base);
 
         let mut builder = Request::builder().method(self.method).uri(&url);

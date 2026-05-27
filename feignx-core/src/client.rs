@@ -19,6 +19,7 @@ use crate::transport::Transport;
 pub struct Client {
     transport: Arc<dyn Transport>,
     url_resolver: Arc<dyn UrlResolver>,
+    service_name: String,
     auth: Option<Arc<dyn Auth>>,
     error_decoder: Arc<dyn ErrorDecoder>,
     request_interceptors: Vec<Arc<dyn RequestInterceptor>>,
@@ -42,6 +43,14 @@ impl Client {
 
     pub fn url_resolver(&self) -> &dyn UrlResolver {
         self.url_resolver.as_ref()
+    }
+
+    pub fn service_name(&self) -> &str {
+        &self.service_name
+    }
+
+    pub async fn resolve_base_url(&self) -> Result<String> {
+        self.url_resolver.resolve(&self.service_name).await
     }
 
     pub fn encoder(&self) -> &dyn Encoder {
@@ -146,7 +155,7 @@ impl Client {
     }
 
     pub async fn resolve_url(&self, path: &str) -> Result<String> {
-        let base = self.url_resolver.resolve("").await?;
+        let base = self.resolve_base_url().await?;
         Ok(format!("{}{}", base, path))
     }
 
@@ -173,6 +182,7 @@ fn default_success_status(status: u16) -> bool {
 pub struct ClientBuilder {
     transport: Box<dyn Transport>,
     url_resolver: Box<dyn UrlResolver>,
+    service_name: String,
     auth: Option<Box<dyn Auth>>,
     error_decoder: Box<dyn ErrorDecoder>,
     request_interceptors: Vec<Arc<dyn RequestInterceptor>>,
@@ -190,6 +200,7 @@ impl ClientBuilder {
         Self {
             transport: Box::new(transport),
             url_resolver: Box::new(StaticUrl(String::new())),
+            service_name: String::new(),
             auth: None,
             error_decoder: Box::new(DefaultErrorDecoder),
             request_interceptors: vec![],
@@ -210,6 +221,11 @@ impl ClientBuilder {
 
     pub fn url_resolver(mut self, resolver: impl UrlResolver) -> Self {
         self.url_resolver = Box::new(resolver);
+        self
+    }
+
+    pub fn service_name(mut self, name: impl Into<String>) -> Self {
+        self.service_name = name.into();
         self
     }
 
@@ -290,6 +306,7 @@ impl ClientBuilder {
         Client {
             transport: Arc::from(self.transport),
             url_resolver: Arc::from(self.url_resolver),
+            service_name: self.service_name,
             auth: self.auth.map(Arc::from),
             error_decoder: Arc::from(self.error_decoder),
             request_interceptors: self.request_interceptors,
