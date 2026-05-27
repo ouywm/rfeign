@@ -50,23 +50,23 @@ pub fn expand(attr: TokenStream, item: TokenStream) -> TokenStream {
     let metadata = build_metadata_methods(&client_attr);
 
     let output = quote! {
-        #[feignx::async_trait]
+        #[rfeign::async_trait]
         #clean_trait
 
         #[derive(Clone)]
         #vis struct #struct_name {
-            client: feignx::client::Client,
+            client: rfeign::client::Client,
         }
 
         impl #struct_name {
-            pub fn new(client: feignx::client::Client) -> Self {
+            pub fn new(client: rfeign::client::Client) -> Self {
                 Self { client }
             }
 
             #metadata
         }
 
-        #[feignx::async_trait]
+        #[rfeign::async_trait]
         impl #trait_name for #struct_name {
             #(#methods)*
         }

@@ -1,7 +1,7 @@
 use std::time::Duration;
 
-use feignx::{ClientBuilder, ReqwestTransport};
-use feignx::part::Part;
+use rfeign::{ClientBuilder, ReqwestTransport};
+use rfeign::part::Part;
 
 #[tokio::test]
 async fn test_get_request() {
@@ -20,7 +20,7 @@ async fn test_post_json() {
         .build();
 
     let resp = client.post("/anything")
-        .json(&serde_json::json!({"name": "feignx"}))
+        .json(&serde_json::json!({"name": "rfeign"}))
         .unwrap()
         .send()
         .await
@@ -52,7 +52,7 @@ async fn test_custom_header() {
         .build();
 
     let resp = client.get("/headers")
-        .header("X-Custom", "feignx-test")
+        .header("X-Custom", "rfeign-test")
         .send()
         .await
         .unwrap();
@@ -82,7 +82,7 @@ async fn test_multipart_upload() {
 
     let file = Part::from_bytes("test.txt", "text/plain", b"hello".to_vec());
     let resp = client.post("/anything")
-        .text_part("name", "feignx")
+        .text_part("name", "rfeign")
         .part("file", file)
         .send()
         .await

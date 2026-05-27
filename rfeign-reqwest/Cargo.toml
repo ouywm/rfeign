@@ -1,6 +1,6 @@
 [package]
-name = "feignx-reqwest"
-description = "Reqwest transport implementation for feignx"
+name = "rfeign-reqwest"
+description = "Reqwest transport implementation for rfeign"
 version = { workspace = true }
 edition = { workspace = true }
 license = { workspace = true }
@@ -10,7 +10,7 @@ categories = { workspace = true }
 keywords = { workspace = true }
 
 [dependencies]
-feignx-core = { workspace = true }
+rfeign-core = { workspace = true }
 reqwest = { workspace = true }
 async-trait = { workspace = true }
 http = { workspace = true }

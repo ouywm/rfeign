@@ -6,8 +6,8 @@ mod nacos_impl {
     use nacos_sdk::api::naming::{NamingService, NamingServiceBuilder};
     use nacos_sdk::api::props::ClientProps;
 
-    use feignx_core::error::{Error, Result};
-    use feignx_core::resolver::UrlResolver;
+    use rfeign_core::error::{Error, Result};
+    use rfeign_core::resolver::UrlResolver;
 
     pub struct NacosResolver {
         naming: Arc<NamingService>,

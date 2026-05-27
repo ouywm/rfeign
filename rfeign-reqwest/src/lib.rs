@@ -2,9 +2,9 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use http::{Request, Response};
 
-use feignx_core::error::{Error, Result};
-use feignx_core::transport::MultipartField;
-use feignx_core::transport::Transport;
+use rfeign_core::error::{Error, Result};
+use rfeign_core::transport::MultipartField;
+use rfeign_core::transport::Transport;
 
 pub struct ReqwestTransport {
     inner: InnerClient,

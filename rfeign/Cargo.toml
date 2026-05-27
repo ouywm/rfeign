@@ -1,5 +1,5 @@
 [package]
-name = "feignx"
+name = "rfeign"
 description = "A declarative HTTP client for Rust, inspired by OpenFeign"
 version = { workspace = true }
 edition = { workspace = true }
@@ -10,9 +10,9 @@ categories = { workspace = true }
 keywords = { workspace = true }
 
 [dependencies]
-feignx-core = { workspace = true }
-feignx-macros = { workspace = true }
-feignx-reqwest = { workspace = true, optional = true }
+rfeign-core = { workspace = true }
+rfeign-macros = { workspace = true }
+rfeign-reqwest = { workspace = true, optional = true }
 serde = { workspace = true }
 serde_json = { workspace = true, optional = true }
 bytes = { workspace = true }
@@ -24,12 +24,12 @@ rs-consul = { workspace = true, optional = true }
 
 [features]
 default = ["reqwest", "json"]
-reqwest = ["dep:feignx-reqwest"]
+reqwest = ["dep:rfeign-reqwest"]
 json = ["dep:serde_json"]
-retry = ["reqwest", "feignx-reqwest/retry"]
-tracing = ["reqwest", "feignx-reqwest/tracing"]
-middleware = ["reqwest", "feignx-reqwest/middleware"]
-circuit-breaker = ["feignx-core/circuit-breaker"]
+retry = ["reqwest", "rfeign-reqwest/retry"]
+tracing = ["reqwest", "rfeign-reqwest/tracing"]
+middleware = ["reqwest", "rfeign-reqwest/middleware"]
+circuit-breaker = ["rfeign-core/circuit-breaker"]
 middleware-full = ["retry", "tracing", "circuit-breaker"]
 nacos = ["dep:nacos-sdk"]
 consul = ["dep:rs-consul"]

@@ -1,4 +1,4 @@
-# feignx
+# rfeign
 
 A declarative HTTP client for Rust, inspired by OpenFeign / Retrofit.
 
@@ -18,7 +18,7 @@ A declarative HTTP client for Rust, inspired by OpenFeign / Retrofit.
 
 ```toml
 [dependencies]
-feignx = "0.0.1"
+rfeign = "0.0.1"
 tokio = { version = "1", features = ["full"] }
 serde = { version = "1", features = ["derive"] }
 ```
@@ -26,21 +26,21 @@ serde = { version = "1", features = ["derive"] }
 ### Declarative (macro-based)
 
 ```rust
-use feignx::{ClientBuilder, ReqwestTransport};
+use rfeign::{ClientBuilder, ReqwestTransport};
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 struct User { id: i64, name: String }
 
-#[feignx::http_client(base_url = "http://localhost:8080", path = "/api/v1")]
+#[rfeign::http_client(base_url = "http://localhost:8080", path = "/api/v1")]
 #[headers("Accept: application/json")]
 trait UserApi {
-    #[feignx::get("/users/{id}")]
-    async fn get_user(&self, #[path] id: i64) -> feignx::Result<User>;
+    #[rfeign::get("/users/{id}")]
+    async fn get_user(&self, #[path] id: i64) -> rfeign::Result<User>;
 
-    #[feignx::get("/users")]
+    #[rfeign::get("/users")]
     async fn list_users(&self, #[query] page: u32, #[query] size: u32)
-        -> feignx::Result<Vec<User>>;
+        -> rfeign::Result<Vec<User>>;
 }
 
 #[tokio::main]
@@ -84,10 +84,10 @@ let user: User = client.get("/users/1")
 ## Method Attributes
 
 ```rust
-#[feignx::get("/path")]          // HTTP method + path
-#[feignx::timeout(5000)]         // Method-level timeout (ms)
-#[feignx::multipart]             // Multipart request
-#[feignx::header("K", "V")]     // Static header on this method
+#[rfeign::get("/path")]          // HTTP method + path
+#[rfeign::timeout(5000)]         // Method-level timeout (ms)
+#[rfeign::multipart]             // Multipart request
+#[rfeign::header("K", "V")]     // Static header on this method
 ```
 
 ## Resilience

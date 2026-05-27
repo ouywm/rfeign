@@ -1,6 +1,6 @@
-use feignx::client::ClientBuilder;
-use feignx::ReqwestTransport;
-use feignx::RequestParam;
+use rfeign::client::ClientBuilder;
+use rfeign::ReqwestTransport;
+use rfeign::RequestParam;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize)]
@@ -22,26 +22,26 @@ struct ListParams {
     keyword: Option<String>,
 }
 
-#[feignx::http_client(base_url = "http://localhost:8080")]
-#[headers("X-App: feignx", "Accept: application/json")]
+#[rfeign::http_client(base_url = "http://localhost:8080")]
+#[headers("X-App: rfeign", "Accept: application/json")]
 trait UserApi {
-    #[feignx::get("/users/{id}")]
-    #[feignx::header("X-Trace-Id", "abc-123")]
-    async fn get_user(&self, #[path] id: i64) -> feignx::Result<User>;
+    #[rfeign::get("/users/{id}")]
+    #[rfeign::header("X-Trace-Id", "abc-123")]
+    async fn get_user(&self, #[path] id: i64) -> rfeign::Result<User>;
 
-    #[feignx::get("/users")]
+    #[rfeign::get("/users")]
     async fn list_users(&self, #[query] page: u32, #[query] size: u32)
-    -> feignx::Result<Vec<User>>;
+    -> rfeign::Result<Vec<User>>;
 
-    #[feignx::post("/users")]
-    async fn create_user(&self, #[body] user: CreateUser) -> feignx::Result<User>;
+    #[rfeign::post("/users")]
+    async fn create_user(&self, #[body] user: CreateUser) -> rfeign::Result<User>;
 
-    #[feignx::delete("/users/{id}")]
+    #[rfeign::delete("/users/{id}")]
     async fn delete_user(
         &self,
         #[path] id: i64,
         #[header("Authorization")] token: String,
-    ) -> feignx::Result<()>;
+    ) -> rfeign::Result<()>;
 }
 
 #[tokio::main]

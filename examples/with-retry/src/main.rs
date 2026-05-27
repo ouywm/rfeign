@@ -1,9 +1,9 @@
 use std::time::Duration;
 
-use feignx::{ClientBuilder, ReqwestTransport};
+use rfeign::{ClientBuilder, ReqwestTransport};
 
 #[tokio::main]
-async fn main() -> feignx::Result<()> {
+async fn main() -> rfeign::Result<()> {
     let transport = ReqwestTransport::builder()
         .retry(3)
         .build();

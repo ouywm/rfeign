@@ -1,6 +1,6 @@
 # 声明式 HTTP 客户端库 — 设计文档
 
-> 库名确定为 **`feignx`**（致敬 OpenFeign，"x" 表示进化版）。
+> 库名确定为 **`rfeign`**（致敬 OpenFeign，"x" 表示进化版）。
 
 ## 定位
 
@@ -37,7 +37,7 @@
 
 ### niuhuan/feign-rs（https://github.com/niuhuan/feign-rs）
 
-- Workspace：`feignx`（运行时）+ `feignx-macros`（过程宏）
+- Workspace：`rfeign`（运行时）+ `rfeign-macros`（过程宏）
 - `#[client(host = "...", path = "/base")]` 标注 trait → 生成同名 struct
 - `#[derive(Args)]` 将多参数打包为结构体（path + query + body + headers）
 - `before_send` 钩子：单一拦截器函数
@@ -124,10 +124,10 @@ pretend 缺少的（我们要补的）：服务发现、中间件集成、DI 注
 ## Crate 结构（Workspace）
 
 ```
-feignx/                              ← workspace root
+rfeign/                              ← workspace root
 ├── Cargo.toml                      ← workspace 定义
 │
-├── feignx-core/                     ← 核心抽象（最小依赖）
+├── rfeign-core/                     ← 核心抽象（最小依赖）
 │   └── src/
 │       ├── lib.rs
 │       ├── transport.rs            ← Transport trait
@@ -145,7 +145,7 @@ feignx/                              ← workspace root
 │       ├── log.rs                  ← LogLevel 枚举
 │       └── client.rs               ← Client + ClientBuilder
 │
-├── feignx-macros/                   ← proc macro
+├── rfeign-macros/                   ← proc macro
 │   └── src/
 │       ├── lib.rs
 │       ├── client.rs               ← #[http_client] 宏实现
@@ -154,12 +154,12 @@ feignx/                              ← workspace root
 │       ├── request_param.rs        ← #[derive(RequestParam)]
 │       └── multipart.rs            ← #[multipart] + #[part]
 │
-├── feignx-reqwest/                  ← reqwest Transport 实现
+├── rfeign-reqwest/                  ← reqwest Transport 实现
 │   └── src/
 │       ├── lib.rs                  ← ReqwestTransport
 │       └── curl.rs                 ← cURL 命令生成
 │
-├── feignx/                          ← 伞 crate（re-export + 可选功能）
+├── rfeign/                          ← 伞 crate（re-export + 可选功能）
 │   └── src/
 │       ├── lib.rs                  ← re-export core + macros + reqwest
 │       ├── middleware.rs           ← 封装 reqwest-retry / failsafe / reqwest-tracing
@@ -180,28 +180,28 @@ feignx/                              ← workspace root
 
 | Crate | 职责 | 核心依赖 |
 |-------|------|---------|
-| `feignx-core` | 所有 trait 定义 + 核心类型 | http, bytes, async-trait, thiserror, serde |
-| `feignx-macros` | proc macro 代码生成 | syn, quote, proc-macro2, darling |
-| `feignx-reqwest` | reqwest Transport + cURL 生成 | feignx-core, reqwest |
-| `feignx` | 伞 crate + 中间件 + 服务发现 | 以上所有 + reqwest-middleware 等 |
+| `rfeign-core` | 所有 trait 定义 + 核心类型 | http, bytes, async-trait, thiserror, serde |
+| `rfeign-macros` | proc macro 代码生成 | syn, quote, proc-macro2, darling |
+| `rfeign-reqwest` | reqwest Transport + cURL 生成 | rfeign-core, reqwest |
+| `rfeign` | 伞 crate + 中间件 + 服务发现 | 以上所有 + reqwest-middleware 等 |
 
 服务发现放在伞 crate 内，通过 feature 门控：
 - `features = ["nacos"]` → 编译 `resolver/nacos.rs`，引入 `nacos-sdk` 依赖
 - `features = ["consul"]` → 编译 `resolver/consul.rs`，引入 consul 依赖
 - 不启用时零额外依赖、零编译开销
 
-### 为什么去掉了 `feignx-middleware`？
+### 为什么去掉了 `rfeign-middleware`？
 
-之前设计有一个独立的 `feignx-middleware` crate。现在去掉了，因为：
+之前设计有一个独立的 `rfeign-middleware` crate。现在去掉了，因为：
 
 1. 重试 → 直接用 `reqwest-retry`（3700 万下载）
 2. 熔断 → 直接用 `failsafe`（1500 万下载）
 3. 链路追踪 → 直接用 `reqwest-tracing`（2400 万下载）
 
-这些不需要我们再封装一层 crate。在伞 crate `feignx/src/middleware.rs` 中做薄封装即可：
+这些不需要我们再封装一层 crate。在伞 crate `rfeign/src/middleware.rs` 中做薄封装即可：
 
 ```rust
-// feignx/src/middleware.rs
+// rfeign/src/middleware.rs
 // 只是把第三方中间件适配到我们的 ClientBuilder API
 
 #[cfg(feature = "retry")]
@@ -220,12 +220,12 @@ pub fn circuit_breaker(failure_threshold: u32, timeout: Duration) -> CircuitBrea
 ### Feature Flags（条件编译）
 
 ```toml
-# feignx/Cargo.toml（伞 crate）
+# rfeign/Cargo.toml（伞 crate）
 [features]
 default = ["reqwest", "json"]
 
 # 传输层后端
-reqwest = ["dep:feignx-reqwest"]
+reqwest = ["dep:rfeign-reqwest"]
 
 # 编解码
 json = ["dep:serde_json"]
@@ -247,21 +247,21 @@ consul = ["dep:consul-api"]
 
 ```toml
 # 最简使用（只要声明式宏 + reqwest）
-feignx = "0.1"
+rfeign = "0.1"
 
 # 需要重试
-feignx = { version = "0.1", features = ["retry"] }
+rfeign = { version = "0.1", features = ["retry"] }
 
 # 需要全部中间件
-feignx = { version = "0.1", features = ["middleware-full"] }
+rfeign = { version = "0.1", features = ["middleware-full"] }
 
 # 需要 Nacos 服务发现
-feignx = { version = "0.1", features = ["nacos"] }
+rfeign = { version = "0.1", features = ["nacos"] }
 ```
 
 **零 feature 时的最小依赖**：
-- `feignx-core`（核心 trait）
-- `feignx-macros`（proc macro）
+- `rfeign-core`（核心 trait）
+- `rfeign-macros`（proc macro）
 - `reqwest`（HTTP 传输）
 - `serde` + `serde_json`（编解码）
 
@@ -328,17 +328,17 @@ let client = ClientBuilder::new(ReqwestTransport::new())
 ### 框架集成（不在本 workspace 内）
 
 ```
-summer-rs/summer-feignx/         ← summer-rs 仓库中的薄插件
-├── Cargo.toml                  ← 依赖 feignx + summer
+summer-rs/summer-rfeign/         ← summer-rs 仓库中的薄插件
+├── Cargo.toml                  ← 依赖 rfeign + summer
 └── src/lib.rs                  ← FeignPlugin，读取配置，注册 Component
 ```
 
 其他框架同理：
-- `axum-feignx` — 提供 axum 的 Extension/State 集成
-- `actix-feignx` — 提供 actix-web 的 Data 集成
-- `salvo-feignx` — 提供 salvo 的 Depot 集成
+- `axum-rfeign` — 提供 axum 的 Extension/State 集成
+- `actix-rfeign` — 提供 actix-web 的 Data 集成
+- `salvo-rfeign` — 提供 salvo 的 Depot 集成
 
-这些集成包只做一件事：**把 feignx 客户端实例注入到框架的 DI/状态管理中**。
+这些集成包只做一件事：**把 rfeign 客户端实例注入到框架的 DI/状态管理中**。
 
 ## 核心抽象设计
 
@@ -353,7 +353,7 @@ summer-rs/summer-feignx/         ← summer-rs 仓库中的薄插件
 ### Transport（传输层）
 
 ```rust
-// feignx-core/src/transport.rs
+// rfeign-core/src/transport.rs
 use http::{Request, Response};
 use bytes::Bytes;
 
@@ -374,7 +374,7 @@ pub trait Transport: Send + Sync + 'static {
 ### UrlResolver（服务发现 — 统一 trait）
 
 ```rust
-// feignx-core/src/resolver.rs
+// rfeign-core/src/resolver.rs
 
 /// 统一的 URL 解析 trait（类似 OpenFeign 的 Target）
 /// 职责：服务名 → 最终可用的 base URL（内部含服务发现 + 负载均衡）
@@ -397,7 +397,7 @@ impl UrlResolver for StaticUrl {
 **各注册中心实现**（独立 crate，只是包一层现有 SDK）：
 
 ```rust
-// feignx-nacos/src/lib.rs
+// rfeign-nacos/src/lib.rs
 // 底层直接用 nacos-sdk（已成熟，10 万下载）
 use nacos_sdk::api::naming::NamingService;
 
@@ -431,7 +431,7 @@ impl UrlResolver for NacosUrl {
 ```
 
 ```rust
-// feignx-consul/src/lib.rs（同理，包一层 consul SDK）
+// rfeign-consul/src/lib.rs（同理，包一层 consul SDK）
 pub struct ConsulUrl { /* consul client */ }
 ```
 
@@ -444,7 +444,7 @@ pub struct ConsulUrl { /* consul client */ }
 ### Middleware（中间件 — 装饰器模式）
 
 ```rust
-// feignx-core/src/middleware.rs
+// rfeign-core/src/middleware.rs
 
 /// 中间件 trait（包裹 Transport 调用链）
 /// 类似 tower::Layer 但更简单，不需要 Service 泛型嵌套
@@ -480,7 +480,7 @@ impl<'a> Next<'a> {
 ### RequestInterceptor（请求拦截器 — 轻量版）
 
 ```rust
-// feignx-core/src/interceptor.rs
+// rfeign-core/src/interceptor.rs
 
 /// 简单的请求修改器（添加 header、修改 URL 等）
 /// 比 Middleware 更轻量，不能控制响应
@@ -493,7 +493,7 @@ pub trait RequestInterceptor: Send + Sync {
 ### Auth（认证抽象 — 参考 httpx / go-resty）
 
 ```rust
-// feignx-core/src/auth.rs
+// rfeign-core/src/auth.rs
 
 /// 认证抽象，支持简单 token 和复杂认证流（如 OAuth token 刷新）
 #[async_trait]
@@ -560,7 +560,7 @@ let client = ClientBuilder::new()
 ### ErrorDecoder（错误解码 — 参考 OpenFeign）
 
 ```rust
-// feignx-core/src/error_decoder.rs
+// rfeign-core/src/error_decoder.rs
 
 /// 自定义错误解码器
 /// 当响应状态码非 2xx 时调用，将响应体解析为具体错误
@@ -611,7 +611,7 @@ let client = ClientBuilder::new()
 ### ResponseInterceptor（响应拦截器 — 参考 OpenFeign）
 
 ```rust
-// feignx-core/src/interceptor.rs
+// rfeign-core/src/interceptor.rs
 
 /// 响应拦截器（检查/修改响应，如统一日志、指标采集）
 #[async_trait]
@@ -623,7 +623,7 @@ pub trait ResponseInterceptor: Send + Sync {
 ### LogLevel（日志级别 — 参考 OpenFeign 4 级别）
 
 ```rust
-// feignx-core/src/log.rs
+// rfeign-core/src/log.rs
 
 /// 请求日志级别
 #[derive(Debug, Clone, Copy, Default)]
@@ -643,7 +643,7 @@ pub enum LogLevel {
 ### Codec（编解码）
 
 ```rust
-// feignx-core/src/codec.rs
+// rfeign-core/src/codec.rs
 
 /// 请求体编码
 pub trait Encoder: Send + Sync {
@@ -665,7 +665,7 @@ impl Decoder for JsonCodec { /* serde_json::from_slice */ }
 ### ClientBuilder（组装所有扩展点）
 
 ```rust
-// feignx-core/src/client.rs
+// rfeign-core/src/client.rs
 
 pub struct ClientBuilder {
     transport: Box<dyn Transport>,
@@ -737,7 +737,7 @@ impl ClientBuilder {
 ### Timeout（细粒度超时 — 参考 httpx）
 
 ```rust
-// feignx-core/src/timeout.rs
+// rfeign-core/src/timeout.rs
 
 pub struct Timeout {
     /// TCP 连接超时
@@ -795,11 +795,11 @@ let client = ClientBuilder::new()
     .build();
 
 // 日志输出示例：
-// [feignx] --> curl -X POST 'http://api.example.com/users' \
+// [rfeign] --> curl -X POST 'http://api.example.com/users' \
 //   -H 'Content-Type: application/json' \
 //   -H 'Authorization: Bearer xxx' \
 //   -d '{"name":"Alice"}'
-// [feignx] <-- 201 Created (23ms)
+// [rfeign] <-- 201 Created (23ms)
 ```
 
 也可以编程式获取：
@@ -836,15 +836,15 @@ Transport.send(request)                 ← 传输层扩展点
   404 + Option<T> → Ok(None)
   非 2xx → ErrorDecoder.decode(status, headers, body) ← 错误解码扩展点
     ↓
-返回 feignx::Result<T>
+返回 rfeign::Result<T>
 ```
 
 ## 返回类型设计
 
-提供 `feignx::Result<T>` 类型别名，用户不需要每次写 `Error`：
+提供 `rfeign::Result<T>` 类型别名，用户不需要每次写 `Error`：
 
 ```rust
-// feignx-core/src/error.rs
+// rfeign-core/src/error.rs
 
 /// 客户端错误
 #[derive(Debug, thiserror::Error)]
@@ -881,12 +881,12 @@ pub type Result<T> = std::result::Result<T, Error>;
 ### 支持的返回类型
 
 ```rust
-feignx::Result<T>              // 标准：2xx 反序列化为 T，非 2xx 走 ErrorDecoder
-feignx::Result<Option<T>>      // 404 → Ok(None)，2xx → Ok(Some(T))
-feignx::Result<()>             // 忽略响应体，只关心是否成功
-feignx::Result<String>         // 原始文本
-feignx::Result<Vec<u8>>        // 原始字节
-feignx::Result<ApiResponse<T>> // 需要访问 status + headers + body
+rfeign::Result<T>              // 标准：2xx 反序列化为 T，非 2xx 走 ErrorDecoder
+rfeign::Result<Option<T>>      // 404 → Ok(None)，2xx → Ok(Some(T))
+rfeign::Result<()>             // 忽略响应体，只关心是否成功
+rfeign::Result<String>         // 原始文本
+rfeign::Result<Vec<u8>>        // 原始字节
+rfeign::Result<ApiResponse<T>> // 需要访问 status + headers + body
 ```
 
 ### ApiResponse（参考 Refit 的 ApiResponse<T>）
@@ -894,7 +894,7 @@ feignx::Result<ApiResponse<T>> // 需要访问 status + headers + body
 有时候用户不只要 body，还需要 status code 和 headers：
 
 ```rust
-// feignx-core/src/response.rs
+// rfeign-core/src/response.rs
 
 pub struct ApiResponse<T> {
     pub status: u16,
@@ -912,7 +912,7 @@ impl<T> ApiResponse<T> {
 使用示例：
 ```rust
 #[get("/users/{id}")]
-async fn get_user(&self, #[path] id: i64) -> feignx::Result<ApiResponse<User>>;
+async fn get_user(&self, #[path] id: i64) -> rfeign::Result<ApiResponse<User>>;
 
 let resp = api.get_user(1).await?;
 println!("status: {}, etag: {:?}", resp.status, resp.headers.get("etag"));
@@ -922,10 +922,10 @@ println!("status: {}, etag: {:?}", resp.status, resp.headers.get("etag"));
 
 ```rust
 // 之前（冗长）
-async fn get_user(&self, #[path] id: i64) -> Result<User, feignx::Error>;
+async fn get_user(&self, #[path] id: i64) -> Result<User, rfeign::Error>;
 
 // 现在（简洁）
-async fn get_user(&self, #[path] id: i64) -> feignx::Result<User>;
+async fn get_user(&self, #[path] id: i64) -> rfeign::Result<User>;
 ```
 
 ### 可选：支持 Option 语义
@@ -935,7 +935,7 @@ async fn get_user(&self, #[path] id: i64) -> feignx::Result<User>;
 ```rust
 // 返回 Option<T>：404 → Ok(None)，2xx → Ok(Some(T))，其他 → Err
 #[get("/users/{id}")]
-async fn find_user(&self, #[path] id: i64) -> feignx::Result<Option<User>>;
+async fn find_user(&self, #[path] id: i64) -> rfeign::Result<Option<User>>;
 ```
 
 ## 两种使用模式
@@ -950,7 +950,7 @@ async fn find_user(&self, #[path] id: i64) -> feignx::Result<Option<User>>;
 #[http_client(service = "user-service")]
 pub trait UserApi {
     #[get("/users/{id}")]
-    async fn get_user(&self, #[path] id: i64) -> feignx::Result<User>;
+    async fn get_user(&self, #[path] id: i64) -> rfeign::Result<User>;
 }
 ```
 
@@ -959,7 +959,7 @@ pub trait UserApi {
 适合：动态 URL、自定义逻辑、不想用宏、但仍想要服务发现 + 重试 + 熔断
 
 ```rust
-use feignx::{Client, ClientBuilder};
+use rfeign::{Client, ClientBuilder};
 
 // 构建 Client（带服务发现 + 重试 + 熔断）
 let client = ClientBuilder::new()
@@ -996,7 +996,7 @@ let resp = client
 适合：需要自定义逻辑（如签名、加密），但仍想复用基础设施
 
 ```rust
-use feignx::Client;
+use rfeign::Client;
 
 #[derive(Clone)]
 pub struct MyPaymentClient {
@@ -1010,7 +1010,7 @@ impl MyPaymentClient {
         Self { client, app_key, app_secret }
     }
 
-    pub async fn charge(&self, amount: u64, order_id: &str) -> feignx::Result<ChargeResult> {
+    pub async fn charge(&self, amount: u64, order_id: &str) -> rfeign::Result<ChargeResult> {
         // 自定义签名逻辑
         let timestamp = chrono::Utc::now().timestamp();
         let sign = self.compute_sign(amount, order_id, timestamp);
@@ -1043,7 +1043,7 @@ impl MyPaymentClient {
 ```
 #[http_client] 宏（模式 1）
         ↓ 生成代码调用
-    feignx::Client（核心运行时）  ← 模式 2/3 直接使用
+    rfeign::Client（核心运行时）  ← 模式 2/3 直接使用
         ↓ 内部组合
     UrlResolver + reqwest-middleware
 ```
@@ -1056,7 +1056,7 @@ impl MyPaymentClient {
 ### 用户 API
 
 ```rust
-use feignx::{http_client, get, post, put, delete, RequestParam};
+use rfeign::{http_client, get, post, put, delete, RequestParam};
 
 // 类级别 headers：所有请求自动带这些头
 #[http_client(
@@ -1065,50 +1065,50 @@ use feignx::{http_client, get, post, put, delete, RequestParam};
 )]
 pub trait UserApi {
     #[get("/users/{id}")]
-    async fn get_user(&self, #[path] id: i64) -> feignx::Result<User>;
+    async fn get_user(&self, #[path] id: i64) -> rfeign::Result<User>;
 
     #[get("/users")]
-    async fn list_users(&self, #[query] params: ListParams) -> feignx::Result<Vec<User>>;
+    async fn list_users(&self, #[query] params: ListParams) -> rfeign::Result<Vec<User>>;
 
     #[post("/users")]
-    async fn create_user(&self, #[body] req: CreateUserReq) -> feignx::Result<User>;
+    async fn create_user(&self, #[body] req: CreateUserReq) -> rfeign::Result<User>;
 
     #[delete("/users/{id}")]
-    async fn delete_user(&self, #[path] id: i64) -> feignx::Result<()>;
+    async fn delete_user(&self, #[path] id: i64) -> rfeign::Result<()>;
 
     // 404 → Ok(None)
     #[get("/users/{id}")]
-    async fn find_user(&self, #[path] id: i64) -> feignx::Result<Option<User>>;
+    async fn find_user(&self, #[path] id: i64) -> rfeign::Result<Option<User>>;
 
     #[get("/users/{id}/avatar")]
     async fn get_avatar(
         &self,
         #[path] id: i64,
         #[header("Authorization")] token: String,
-    ) -> feignx::Result<Vec<u8>>;
+    ) -> rfeign::Result<Vec<u8>>;
 
     // 批量动态头（类似 OpenFeign @HeaderMap）
     #[get("/data")]
     async fn get_data(
         &self,
         #[headers] extra_headers: HashMap<String, String>,
-    ) -> feignx::Result<Data>;
+    ) -> rfeign::Result<Data>;
 
     // 方法级超时覆盖（类似 OpenFeign Request.Options）
     #[get("/slow-report")]
     #[timeout(30000)]  // 30s，覆盖全局超时
-    async fn get_slow_report(&self) -> feignx::Result<Report>;
+    async fn get_slow_report(&self) -> rfeign::Result<Report>;
 
     // 复杂请求使用 RequestParam 结构体
     #[put("/users/{id}")]
-    async fn update_user(&self, req: UpdateUserRequest) -> feignx::Result<User>;
+    async fn update_user(&self, req: UpdateUserRequest) -> rfeign::Result<User>;
 }
 
 // 服务名模式（需要 UrlResolver）
 #[http_client(service = "user-service", path = "/api/v1")]
 pub trait UserApiV2 {
     #[get("/users/{id}")]
-    async fn get_user(&self, #[path] id: i64) -> feignx::Result<User>;
+    async fn get_user(&self, #[path] id: i64) -> rfeign::Result<User>;
 }
 ```
 
@@ -1119,11 +1119,11 @@ pub trait UserApiV2 {
 ```rust
 // URL 中是 user_id，但 Rust 变量名想用 id
 #[get("/users/{user_id}")]
-async fn get_user(&self, #[path(name = "user_id")] id: i64) -> feignx::Result<User>;
+async fn get_user(&self, #[path(name = "user_id")] id: i64) -> rfeign::Result<User>;
 
 // Query 参数别名
 #[get("/search")]
-async fn search(&self, #[query(name = "q")] keyword: String) -> feignx::Result<Vec<Item>>;
+async fn search(&self, #[query(name = "q")] keyword: String) -> rfeign::Result<Vec<Item>>;
 ```
 
 ### Query 数组格式（参考 Refit CollectionFormat）
@@ -1133,11 +1133,11 @@ async fn search(&self, #[query(name = "q")] keyword: String) -> feignx::Result<V
 ```rust
 // Multi（默认）: ?ids=1&ids=2&ids=3
 #[get("/users")]
-async fn get_by_ids(&self, #[query] ids: Vec<i64>) -> feignx::Result<Vec<User>>;
+async fn get_by_ids(&self, #[query] ids: Vec<i64>) -> rfeign::Result<Vec<User>>;
 
 // Csv: ?ids=1,2,3
 #[get("/users")]
-async fn get_by_ids(&self, #[query(format = "csv")] ids: Vec<i64>) -> feignx::Result<Vec<User>>;
+async fn get_by_ids(&self, #[query(format = "csv")] ids: Vec<i64>) -> rfeign::Result<Vec<User>>;
 
 // 支持的格式：
 // - multi（默认）: ?ids=1&ids=2&ids=3
@@ -1159,7 +1159,7 @@ async fn create_user(&self, #[body] req: CreateUserReq) -> Result<User, Error>;
 **规则 2**：需要混合参数（path + query + body + header 同时存在）→ 用 `#[derive(RequestParam)]`
 
 ```rust
-use feignx::RequestParam;
+use rfeign::RequestParam;
 
 #[derive(RequestParam)]
 pub struct UpdateUserRequest {
@@ -1209,7 +1209,7 @@ async fn create_user(&self, req: CreateUserReq) -> Result<User, Error>;
 参考 Refit 的 `[Multipart]` + go-resty 的 `.SetFile()`：
 
 ```rust
-use feignx::Part;
+use rfeign::Part;
 
 #[http_client(base_url = "http://file-service:8080")]
 pub trait FileApi {
@@ -1220,7 +1220,7 @@ pub trait FileApi {
         &self,
         #[part(name = "file")] file: Part,
         #[part(name = "description")] desc: String,
-    ) -> feignx::Result<UploadResult>;
+    ) -> rfeign::Result<UploadResult>;
 
     /// 多文件上传
     #[post("/batch-upload")]
@@ -1228,13 +1228,13 @@ pub trait FileApi {
     async fn batch_upload(
         &self,
         #[part(name = "files")] files: Vec<Part>,
-    ) -> feignx::Result<Vec<UploadResult>>;
+    ) -> rfeign::Result<Vec<UploadResult>>;
 }
 ```
 
 `Part` 类型：
 ```rust
-// feignx-core/src/part.rs
+// rfeign-core/src/part.rs
 
 pub struct Part {
     pub filename: String,
@@ -1262,14 +1262,14 @@ let result = file_api.upload(file, "my photo".into()).await?;
 大文件下载或 SSE 场景，不应该把整个 body 加载到内存：
 
 ```rust
-use feignx::ByteStream;
+use rfeign::ByteStream;
 use futures::StreamExt;
 
 #[http_client(base_url = "http://file-service:8080")]
 pub trait FileApi {
     /// 返回 ByteStream，逐块读取
     #[get("/files/{id}/download")]
-    async fn download(&self, #[path] id: i64) -> feignx::Result<ByteStream>;
+    async fn download(&self, #[path] id: i64) -> rfeign::Result<ByteStream>;
 }
 
 // ByteStream 是 impl Stream<Item = Result<Bytes, Error>>
@@ -1286,11 +1286,11 @@ while let Some(chunk) = stream.next().await {
 // 宏自动生成：
 #[derive(Clone)]
 pub struct UserApiClient {
-    client: feignx_core::Client,
+    client: rfeign_core::Client,
 }
 
 impl UserApiClient {
-    pub fn new(client: feignx_core::Client) -> Self {
+    pub fn new(client: rfeign_core::Client) -> Self {
         Self { client }
     }
 }
@@ -1315,11 +1315,11 @@ impl UserApi for UserApiClient {
 
 ```rust
 // 纯 Rust，无框架：
-let client = feign::ClientBuilder::new(feignx_reqwest::ReqwestTransport::new())
+let client = feign::ClientBuilder::new(rfeign_reqwest::ReqwestTransport::new())
     .base_url("http://user-service:8080")
     .interceptor(AuthInterceptor::new("my-token"))
-    .middleware(feignx_middleware::Retry::new(3))
-    .middleware(feignx_middleware::Timeout::new(Duration::from_secs(5)))
+    .middleware(rfeign_middleware::Retry::new(3))
+    .middleware(rfeign_middleware::Timeout::new(Duration::from_secs(5)))
     .build();
 
 let user_api = UserApiClient::new(client);
@@ -1331,7 +1331,7 @@ let user = user_api.get_user(123).await?;
 ### 重试
 
 ```rust
-// feignx-middleware/src/retry.rs
+// rfeign-middleware/src/retry.rs
 
 pub struct Retry {
     max_attempts: u32,
@@ -1365,7 +1365,7 @@ impl Middleware for Retry {
 ### 熔断器
 
 ```rust
-// feignx-middleware/src/circuit_breaker.rs
+// rfeign-middleware/src/circuit_breaker.rs
 
 pub struct CircuitBreaker {
     failure_threshold: u32,
@@ -1383,7 +1383,7 @@ enum State {
 ### Trace 透传
 
 ```rust
-// feignx-middleware/src/trace.rs
+// rfeign-middleware/src/trace.rs
 
 pub struct TracePropagation;
 
@@ -1402,12 +1402,12 @@ impl RequestInterceptor for TracePropagation {
 ## summer-rs 集成（薄插件）
 
 ```rust
-// summer-rs 仓库中：summer-feignx/src/lib.rs
+// summer-rs 仓库中：summer-rfeign/src/lib.rs
 
 use summer::{app::AppBuilder, plugin::Plugin, async_trait};
 use summer::config::Configurable;
-use feignx::{ClientBuilder, Client};
-use feignx_reqwest::ReqwestTransport;
+use rfeign::{ClientBuilder, Client};
+use rfeign_reqwest::ReqwestTransport;
 
 pub struct FeignPlugin;
 
@@ -1423,7 +1423,7 @@ impl Plugin for FeignPlugin {
         // 检测 summer-opentelemetry 是否存在，自动加 trace 透传
         #[cfg(feature = "opentelemetry")]
         {
-            builder = builder.interceptor(feignx_middleware::TracePropagation);
+            builder = builder.interceptor(rfeign_middleware::TracePropagation);
         }
 
         let client = builder.build();
@@ -1444,7 +1444,7 @@ struct HttpClientConfig {
 
 ```rust
 use summer::App;
-use summer_feignx::FeignPlugin;
+use summer_rfeign::FeignPlugin;
 
 #[auto_config(FeignConfigurator)]
 #[tokio::main]
@@ -1471,7 +1471,7 @@ struct OrderService {
 | 传输层 | 硬编码 reqwest/isahc | `Transport` trait 可插拔 |
 | 中间件 | 无 | `Middleware` + `RequestInterceptor` |
 | 编解码 | 硬编码 | `Encoder` / `Decoder` trait 可插拔 |
-| 框架集成 | 无 | 独立集成包（summer-feignx 等） |
+| 框架集成 | 无 | 独立集成包（summer-rfeign 等） |
 | 重试/熔断 | 无 | 复用 reqwest-retry / failsafe |
 | 可观测性 | 无 | trace 透传 + 请求日志 |
 
@@ -1481,19 +1481,19 @@ struct OrderService {
 
 **目标**：能声明式定义 HTTP 客户端，发请求，拿结果。
 
-- [ ] `feignx-core`：Transport / Middleware / RequestInterceptor / ResponseInterceptor / Codec / Error
-- [ ] `feignx-core`：Auth trait + BearerAuth / BasicAuth 内置实现
-- [ ] `feignx-core`：ErrorDecoder trait + DefaultErrorDecoder
-- [ ] `feignx-core`：`feignx::Result<T>` / `ApiResponse<T>` / `Option<T>` 语义
-- [ ] `feignx-core`：Timeout 结构体（connect / read / write）
-- [ ] `feignx-macros`：`#[http_client]` + `#[get/post/put/delete/patch/head]`
-- [ ] `feignx-macros`：`#[path]` / `#[query]` / `#[body]` / `#[header]` / `#[headers]`
-- [ ] `feignx-macros`：参数别名 `#[path(name = "xxx")]`
-- [ ] `feignx-macros`：类级别 headers `#[http_client(headers = [...])]`
-- [ ] `feignx-macros`：`#[derive(RequestParam)]`
-- [ ] `feignx-macros`：Query 数组格式 `#[query(format = "multi/csv")]`
-- [ ] `feignx-reqwest`：reqwest Transport 实现
-- [ ] `feignx`：伞 crate
+- [ ] `rfeign-core`：Transport / Middleware / RequestInterceptor / ResponseInterceptor / Codec / Error
+- [ ] `rfeign-core`：Auth trait + BearerAuth / BasicAuth 内置实现
+- [ ] `rfeign-core`：ErrorDecoder trait + DefaultErrorDecoder
+- [ ] `rfeign-core`：`rfeign::Result<T>` / `ApiResponse<T>` / `Option<T>` 语义
+- [ ] `rfeign-core`：Timeout 结构体（connect / read / write）
+- [ ] `rfeign-macros`：`#[http_client]` + `#[get/post/put/delete/patch/head]`
+- [ ] `rfeign-macros`：`#[path]` / `#[query]` / `#[body]` / `#[header]` / `#[headers]`
+- [ ] `rfeign-macros`：参数别名 `#[path(name = "xxx")]`
+- [ ] `rfeign-macros`：类级别 headers `#[http_client(headers = [...])]`
+- [ ] `rfeign-macros`：`#[derive(RequestParam)]`
+- [ ] `rfeign-macros`：Query 数组格式 `#[query(format = "multi/csv")]`
+- [ ] `rfeign-reqwest`：reqwest Transport 实现
+- [ ] `rfeign`：伞 crate
 - [ ] 命令式 Client API（不用宏也能用）
 - [ ] `reqwest_config` 钩子（暴露底层 reqwest 配置）
 - [ ] `.success_status()` 自定义成功状态码判断
@@ -1520,12 +1520,12 @@ struct OrderService {
 - [ ] `UrlResolver` trait（统一服务发现 + 负载均衡）
 - [ ] `StaticUrl` 内置实现
 - [ ] `#[http_client(service = "xxx")]` 语法
-- [ ] `feignx-nacos`（feature `nacos`，底层包 nacos-sdk）
-- [ ] `feignx-consul`（feature `consul`）
+- [ ] `rfeign-nacos`（feature `nacos`，底层包 nacos-sdk）
+- [ ] `rfeign-consul`（feature `consul`）
 
 ### Phase 4：框架集成
 
 **目标**：与 summer-rs 等框架打通。
 
-- [ ] `summer-feignx`（summer-rs 插件，读取配置 + 注册 Component）
+- [ ] `summer-rfeign`（summer-rs 插件，读取配置 + 注册 Component）
 - [ ] 文档 + 其他框架集成指南（axum / actix-web / salvo）

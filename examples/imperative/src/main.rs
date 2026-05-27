@@ -1,5 +1,5 @@
-use feignx::ReqwestTransport;
-use feignx::client::ClientBuilder;
+use rfeign::ReqwestTransport;
+use rfeign::client::ClientBuilder;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize)]
@@ -20,14 +20,14 @@ struct ListParams {
 }
 
 #[tokio::main]
-async fn main() -> feignx::Result<()> {
+async fn main() -> rfeign::Result<()> {
     let client = ClientBuilder::new(ReqwestTransport::new())
         .base_url("https://httpbin.org")
         .build();
 
     let resp = client.get("/get")
         .query_pair("page", "1")
-        .header("X-App", "feignx")
+        .header("X-App", "rfeign")
         .send()
         .await?;
     println!("status: {}", resp.status());

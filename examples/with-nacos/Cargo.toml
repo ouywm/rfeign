@@ -5,6 +5,6 @@ edition = { workspace = true }
 publish = false
 
 [dependencies]
-feignx = { workspace = true, features = ["nacos"] }
+rfeign = { workspace = true, features = ["nacos"] }
 tokio = { workspace = true }
 serde = { workspace = true }

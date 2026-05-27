@@ -5,8 +5,8 @@ mod consul_impl {
     use async_trait::async_trait;
     use rs_consul::Consul;
 
-    use feignx_core::error::{Error, Result};
-    use feignx_core::resolver::UrlResolver;
+    use rfeign_core::error::{Error, Result};
+    use rfeign_core::resolver::UrlResolver;
 
     pub struct ConsulResolver {
         client: Arc<Consul>,

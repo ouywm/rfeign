@@ -473,7 +473,7 @@ dependencies = [
 name = "example-basic"
 version = "0.0.1"
 dependencies = [
- "feignx",
+ "rfeign",
  "serde",
  "tokio",
 ]
@@ -482,7 +482,7 @@ dependencies = [
 name = "example-file-upload"
 version = "0.0.1"
 dependencies = [
- "feignx",
+ "rfeign",
  "serde",
  "tokio",
 ]
@@ -491,7 +491,7 @@ dependencies = [
 name = "example-imperative"
 version = "0.0.1"
 dependencies = [
- "feignx",
+ "rfeign",
  "serde",
  "tokio",
 ]
@@ -500,7 +500,7 @@ dependencies = [
 name = "example-with-nacos"
 version = "0.0.1"
 dependencies = [
- "feignx",
+ "rfeign",
  "serde",
  "tokio",
 ]
@@ -509,7 +509,7 @@ dependencies = [
 name = "example-with-retry"
 version = "0.0.1"
 dependencies = [
- "feignx",
+ "rfeign",
  "serde",
  "tokio",
 ]
@@ -519,69 +519,6 @@ name = "fastrand"
 version = "2.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9f1f227452a390804cdb637b74a86990f2a7d7ba4b7d5693aac9b4dd6defd8d6"
-
-[[package]]
-name = "feignx"
-version = "0.0.1"
-dependencies = [
- "async-trait",
- "bytes",
- "feignx-core",
- "feignx-macros",
- "feignx-reqwest",
- "http",
- "nacos-sdk",
- "rs-consul",
- "serde",
- "serde_json",
- "serde_urlencoded",
- "tokio",
-]
-
-[[package]]
-name = "feignx-core"
-version = "0.0.1"
-dependencies = [
- "async-trait",
- "base64",
- "bytes",
- "erased-serde 0.4.10",
- "futures-core",
- "futures-util",
- "http",
- "recloser",
- "serde",
- "serde_json",
- "serde_urlencoded",
- "thiserror",
- "tokio",
- "tokio-util",
-]
-
-[[package]]
-name = "feignx-macros"
-version = "0.0.1"
-dependencies = [
- "darling",
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "feignx-reqwest"
-version = "0.0.1"
-dependencies = [
- "async-trait",
- "backon",
- "bytes",
- "feignx-core",
- "http",
- "reqwest 0.13.4",
- "reqwest-middleware",
- "reqwest-retry",
- "reqwest-tracing",
-]
 
 [[package]]
 name = "find-msvc-tools"
@@ -1732,6 +1669,69 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dc05fbf560421a0357a750cbe78c7ca19d4923918490daabba313d5dbc871e47"
 dependencies = [
  "rand 0.10.1",
+]
+
+[[package]]
+name = "rfeign"
+version = "0.0.1"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "http",
+ "nacos-sdk",
+ "rfeign-core",
+ "rfeign-macros",
+ "rfeign-reqwest",
+ "rs-consul",
+ "serde",
+ "serde_json",
+ "serde_urlencoded",
+ "tokio",
+]
+
+[[package]]
+name = "rfeign-core"
+version = "0.0.1"
+dependencies = [
+ "async-trait",
+ "base64",
+ "bytes",
+ "erased-serde 0.4.10",
+ "futures-core",
+ "futures-util",
+ "http",
+ "recloser",
+ "serde",
+ "serde_json",
+ "serde_urlencoded",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+]
+
+[[package]]
+name = "rfeign-macros"
+version = "0.0.1"
+dependencies = [
+ "darling",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "rfeign-reqwest"
+version = "0.0.1"
+dependencies = [
+ "async-trait",
+ "backon",
+ "bytes",
+ "http",
+ "reqwest 0.13.4",
+ "reqwest-middleware",
+ "reqwest-retry",
+ "reqwest-tracing",
+ "rfeign-core",
 ]
 
 [[package]]

@@ -1,10 +1,10 @@
 [workspace]
 resolver = "2"
 members = [
-    "feignx-core",
-    "feignx-macros",
-    "feignx-reqwest",
-    "feignx",
+    "rfeign-core",
+    "rfeign-macros",
+    "rfeign-reqwest",
+    "rfeign",
     "examples/basic",
     "examples/imperative",
     "examples/with-retry",
@@ -17,15 +17,15 @@ version = "0.0.1"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 authors = ["ouywm"]
-repository = "https://github.com/ouywm/feignx"
+repository = "https://github.com/ouywm/rfeign"
 categories = ["web-programming::http-client", "asynchronous"]
 keywords = ["http-client", "declarative", "feign", "microservice", "async"]
 
 [workspace.dependencies]
-feignx = { path = "feignx", version = "0.0.1" }
-feignx-core = { path = "feignx-core", version = "0.0.1" }
-feignx-macros = { path = "feignx-macros", version = "0.0.1" }
-feignx-reqwest = { path = "feignx-reqwest", version = "0.0.1" }
+rfeign = { path = "rfeign", version = "0.0.1" }
+rfeign-core = { path = "rfeign-core", version = "0.0.1" }
+rfeign-macros = { path = "rfeign-macros", version = "0.0.1" }
+rfeign-reqwest = { path = "rfeign-reqwest", version = "0.0.1" }
 http = "1.4"
 bytes = "1.11"
 reqwest = { version = "0.13", features = ["json", "multipart", "stream"] }

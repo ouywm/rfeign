@@ -15,10 +15,10 @@ mod symbol;
 /// # Example
 ///
 /// ```ignore
-/// #[feignx::http_client(base_url = "http://localhost:8080")]
+/// #[rfeign::http_client(base_url = "http://localhost:8080")]
 /// trait UserApi {
-///     #[feignx::get("/users/{id}")]
-///     async fn get_user(&self, #[path] id: i64) -> feignx::Result<User>;
+///     #[rfeign::get("/users/{id}")]
+///     async fn get_user(&self, #[path] id: i64) -> rfeign::Result<User>;
 /// }
 ///
 /// let api = UserApiClient::new(client);
@@ -33,7 +33,7 @@ pub fn http_client(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// # Example
 ///
 /// ```ignore
-/// #[derive(feignx::RequestParam)]
+/// #[derive(rfeign::RequestParam)]
 /// struct ListParams {
 ///     page: u32,
 ///     #[param(name = "q")]

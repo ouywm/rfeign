@@ -1,5 +1,5 @@
-use feignx::resolver_ext::NacosResolverBuilder;
-use feignx::{ClientBuilder, ReqwestTransport};
+use rfeign::resolver_ext::NacosResolverBuilder;
+use rfeign::{ClientBuilder, ReqwestTransport};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -35,17 +35,17 @@ pub struct RoleDetailVo {
     pub role_code: String,
 }
 
-#[feignx::http_client(service = "user_service", path = "/api")]
+#[rfeign::http_client(service = "user_service", path = "/api")]
 #[headers(
     "Authorization : Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzdW1tZXItYWRtaW4iLCJhdWQiOiJzdW1tZXItYWRtaW4iLCJzdWIiOiIyIiwidHlwIjoiYWNjZXNzIiwiaWF0IjoxNzc5ODczNTU0LCJleHAiOjE3Nzk4ODA3NTQsImRldiI6IndlYiIsInVzZXJfbmFtZSI6IkFkbWluIiwibmlja19uYW1lIjoi566h55CG5ZGYIiwicm9sZXMiOlsiUl9BRE1JTiJdLCJwYiI6IkFFQTRBQnc9In0.2XYPHd4Nzfaym3h96QXL5QmqaFzVlMIMWqcHOsmXrbY"
 )]
 trait UserApi {
-    #[feignx::get("/user/{id}")]
-    async fn get_user(&self, #[path] id: i64) -> feignx::Result<User>;
+    #[rfeign::get("/user/{id}")]
+    async fn get_user(&self, #[path] id: i64) -> rfeign::Result<User>;
 }
 
 #[tokio::main]
-async fn main() -> feignx::Result<()> {
+async fn main() -> rfeign::Result<()> {
     let resolver = NacosResolverBuilder::new("127.0.0.1:8848")
         .namespace("public")
         .group("DEFAULT_GROUP")

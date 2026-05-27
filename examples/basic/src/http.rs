@@ -11,33 +11,33 @@ struct CreateUser {
     name: String,
 }
 
-#[feignx::http_client(base_url = "http://localhost:8080")]
+#[rfeign::http_client(base_url = "http://localhost:8080")]
 trait UserApi {
-    #[feignx::get("/users/{id}")]
-    async fn get_user(&self, #[path] id: i64) -> feignx::Result<User>;
+    #[rfeign::get("/users/{id}")]
+    async fn get_user(&self, #[path] id: i64) -> rfeign::Result<User>;
 
-    #[feignx::get("/users")]
+    #[rfeign::get("/users")]
     async fn list_users(&self, #[query] page: u32, #[query] size: u32)
-    -> feignx::Result<Vec<User>>;
+    -> rfeign::Result<Vec<User>>;
 
-    #[feignx::post("/users")]
-    async fn create_user(&self, #[body] user: CreateUser) -> feignx::Result<User>;
+    #[rfeign::post("/users")]
+    async fn create_user(&self, #[body] user: CreateUser) -> rfeign::Result<User>;
 
-    #[feignx::delete("/users/{id}")]
+    #[rfeign::delete("/users/{id}")]
     async fn delete_user(
         &self,
         #[path] id: i64,
         #[header("Authorization")] token: String,
-    ) -> feignx::Result<()>;
+    ) -> rfeign::Result<()>;
 }
 
 #[derive(Clone)]
 struct UserApiCClient {
-    client: feignx::client::Client,
+    client: rfeign::client::Client,
 }
 
 impl UserApiCClient {
-    pub fn new(client: feignx::client::Client) -> Self {
+    pub fn new(client: rfeign::client::Client) -> Self {
         Self { client }
     }
 
@@ -54,35 +54,35 @@ impl UserApiCClient {
     }
 }
 
-#[feignx::async_trait]
+#[rfeign::async_trait]
 impl UserApi for UserApiCClient {
-    async fn get_user(&self, id: i64) -> feignx::Result<User> {
+    async fn get_user(&self, id: i64) -> rfeign::Result<User> {
         let mut url = self
             .client
             .resolve_url(&::alloc::__export::must_use({
                 ::alloc::fmt::format(::alloc::__export::format_args!("/users/{}", id))
             }))
             .await?;
-        let mut builder = feignx::http::Request::builder()
-            .method(feignx::http::Method::GET)
+        let mut builder = rfeign::http::Request::builder()
+            .method(rfeign::http::Method::GET)
             .uri(&url);
-        let body = feignx::bytes::Bytes::new();
+        let body = rfeign::bytes::Bytes::new();
         let request = match builder.body(body) {
             Ok(r) => r,
-            Err(e) => return Err(feignx::Error::Other(e.to_string())),
+            Err(e) => return Err(rfeign::Error::Other(e.to_string())),
         };
         self.client.send_and_decode(request).await
     }
-    async fn list_users(&self, page: u32, size: u32) -> feignx::Result<Vec<User>> {
+    async fn list_users(&self, page: u32, size: u32) -> rfeign::Result<Vec<User>> {
         let mut url = self.client.resolve_url(&"/users").await?;
         let qs = [
             (
                 "page",
-                feignx::serde_urlencoded::to_string(&page).unwrap_or_default(),
+                rfeign::serde_urlencoded::to_string(&page).unwrap_or_default(),
             ),
             (
                 "size",
-                feignx::serde_urlencoded::to_string(&size).unwrap_or_default(),
+                rfeign::serde_urlencoded::to_string(&size).unwrap_or_default(),
             ),
         ]
         .iter()
@@ -98,43 +98,43 @@ impl UserApi for UserApiCClient {
             url.push('?');
             url.push_str(&qs);
         }
-        let mut builder = feignx::http::Request::builder()
-            .method(feignx::http::Method::GET)
+        let mut builder = rfeign::http::Request::builder()
+            .method(rfeign::http::Method::GET)
             .uri(&url);
-        let body = feignx::bytes::Bytes::new();
+        let body = rfeign::bytes::Bytes::new();
         let request = match builder.body(body) {
             Ok(r) => r,
-            Err(e) => return Err(feignx::Error::Other(e.to_string())),
+            Err(e) => return Err(rfeign::Error::Other(e.to_string())),
         };
         self.client.send_and_decode(request).await
     }
-    async fn create_user(&self, user: CreateUser) -> feignx::Result<User> {
+    async fn create_user(&self, user: CreateUser) -> rfeign::Result<User> {
         let mut url = self.client.resolve_url(&"/users").await?;
-        let mut builder = feignx::http::Request::builder()
-            .method(feignx::http::Method::POST)
+        let mut builder = rfeign::http::Request::builder()
+            .method(rfeign::http::Method::POST)
             .uri(&url);
         let body = self.client.encode_body(&user)?;
         let request = match builder.body(body) {
             Ok(r) => r,
-            Err(e) => return Err(feignx::Error::Other(e.to_string())),
+            Err(e) => return Err(rfeign::Error::Other(e.to_string())),
         };
         self.client.send_and_decode(request).await
     }
-    async fn delete_user(&self, id: i64, token: String) -> feignx::Result<()> {
+    async fn delete_user(&self, id: i64, token: String) -> rfeign::Result<()> {
         let mut url = self
             .client
             .resolve_url(&::alloc::__export::must_use({
                 ::alloc::fmt::format(::alloc::__export::format_args!("/users/{}", id))
             }))
             .await?;
-        let mut builder = feignx::http::Request::builder()
-            .method(feignx::http::Method::DELETE)
+        let mut builder = rfeign::http::Request::builder()
+            .method(rfeign::http::Method::DELETE)
             .uri(&url);
         builder = builder.header("Authorization", token.to_string());
-        let body = feignx::bytes::Bytes::new();
+        let body = rfeign::bytes::Bytes::new();
         let request = match builder.body(body) {
             Ok(r) => r,
-            Err(e) => return Err(feignx::Error::Other(e.to_string())),
+            Err(e) => return Err(rfeign::Error::Other(e.to_string())),
         };
         self.client.send_and_decode(request).await
     }

@@ -1,6 +1,6 @@
 [package]
-name = "feignx-core"
-description = "Core traits and types for feignx declarative HTTP client"
+name = "rfeign-core"
+description = "Core traits and types for rfeign declarative HTTP client"
 version = { workspace = true }
 edition = { workspace = true }
 license = { workspace = true }
