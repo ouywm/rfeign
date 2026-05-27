@@ -53,7 +53,7 @@ pub fn derive_request_param(item: TokenStream) -> TokenStream {
 /// # Example
 ///
 /// ```ignore
-/// #[derive(rfeign::Args)]
+/// #[derive(rfeign::RfeignArgs)]
 /// struct SearchArgs {
 ///     #[path]
 ///     id: i64,
@@ -65,7 +65,7 @@ pub fn derive_request_param(item: TokenStream) -> TokenStream {
 ///     token: String,
 /// }
 /// ```
-#[proc_macro_derive(Args, attributes(path, query, body, header))]
+#[proc_macro_derive(RfeignArgs, attributes(path, query, body, header))]
 pub fn derive_args(item: TokenStream) -> TokenStream {
     args::expand(item)
 }
