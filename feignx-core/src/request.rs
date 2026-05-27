@@ -3,6 +3,7 @@ use std::time::Duration;
 use bytes::Bytes;
 use http::{HeaderMap, HeaderName, HeaderValue, Method, Request, Response};
 use serde::de::DeserializeOwned;
+use tokio_util::sync::CancellationToken;
 
 use crate::client::Client;
 use crate::error::{Error, Result};
@@ -17,6 +18,7 @@ pub struct RequestBuilder {
     query: Vec<(String, String)>,
     body: Bytes,
     timeout: Option<Duration>,
+    cancel_token: Option<CancellationToken>,
     multipart: Option<Vec<(String, MultipartField)>>,
 }
 
@@ -30,12 +32,18 @@ impl RequestBuilder {
             query: Vec::new(),
             body: Bytes::new(),
             timeout: None,
+            cancel_token: None,
             multipart: None,
         }
     }
 
     pub fn timeout(mut self, duration: Duration) -> Self {
         self.timeout = Some(duration);
+        self
+    }
+
+    pub fn cancel_token(mut self, token: CancellationToken) -> Self {
+        self.cancel_token = Some(token);
         self
     }
 
@@ -136,29 +144,60 @@ impl RequestBuilder {
             Err(e) => return Err(Error::Other(e.to_string())),
         };
 
-        let response = match self.timeout {
-            Some(duration) => {
-                let fut = async {
-                    match self.multipart {
-                        Some(parts) => self.client.execute_multipart(request, parts).await,
-                        None => self.client.execute(request).await,
+        let fut = async {
+            match self.multipart {
+                Some(parts) => self.client.execute_multipart(request, parts).await,
+                None => self.client.execute(request).await,
+            }
+        };
+
+        let response = match (self.timeout, self.cancel_token) {
+            (Some(duration), Some(token)) => {
+                tokio::select! {
+                    result = tokio::time::timeout(duration, fut) => {
+                        match result {
+                            Ok(r) => r?,
+                            Err(_) => return Err(Error::Timeout),
+                        }
                     }
-                };
+                    _ = token.cancelled() => return Err(Error::Cancelled),
+                }
+            }
+            (Some(duration), None) => {
                 match tokio::time::timeout(duration, fut).await {
-                    Ok(result) => result?,
+                    Ok(r) => r?,
                     Err(_) => return Err(Error::Timeout),
                 }
             }
-            None => match self.multipart {
-                Some(parts) => self.client.execute_multipart(request, parts).await?,
-                None => self.client.execute(request).await?,
-            },
+            (None, Some(token)) => {
+                tokio::select! {
+                    result = fut => result?,
+                    _ = token.cancelled() => return Err(Error::Cancelled),
+                }
+            }
+            (None, None) => fut.await?,
         };
 
         Ok(RawResponse {
             client: self.client,
             response,
         })
+    }
+
+    pub async fn send_streaming(self) -> Result<crate::transport::StreamingResponse> {
+        let base = self.client.url_resolver().resolve("").await?;
+        let url = self.build_url(&base);
+
+        let mut builder = Request::builder().method(self.method).uri(&url);
+        if let Some(h) = builder.headers_mut() {
+            *h = self.headers;
+        }
+        let request = match builder.body(self.body) {
+            Ok(r) => r,
+            Err(e) => return Err(Error::Other(e.to_string())),
+        };
+
+        self.client.transport().send_streaming(request).await
     }
 }
 

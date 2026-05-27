@@ -19,7 +19,6 @@ bytes = { workspace = true }
 http = { workspace = true }
 async-trait = { workspace = true }
 serde_urlencoded = { workspace = true }
-failsafe = { workspace = true, optional = true }
 nacos-sdk = { workspace = true, optional = true }
 
 [features]
@@ -29,6 +28,6 @@ json = ["dep:serde_json"]
 retry = ["reqwest", "feignx-reqwest/retry"]
 tracing = ["reqwest", "feignx-reqwest/tracing"]
 middleware = ["reqwest", "feignx-reqwest/middleware"]
-circuit-breaker = ["dep:failsafe"]
+circuit-breaker = ["feignx-core/circuit-breaker"]
 middleware-full = ["retry", "tracing", "circuit-breaker"]
 nacos = ["dep:nacos-sdk"]
