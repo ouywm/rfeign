@@ -10,6 +10,7 @@ pub mod part;
 pub mod request;
 pub mod resolver;
 pub mod response;
+pub mod retry;
 pub mod stream;
 pub mod timeout;
 pub mod transport;

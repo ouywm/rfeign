@@ -21,6 +21,9 @@ pub enum Error {
     #[error("request cancelled")]
     Cancelled,
 
+    #[error("request timeout")]
+    Timeout,
+
     #[error("encode error: {0}")]
     Encode(String),
 

@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use bytes::Bytes;
 use http::{HeaderMap, HeaderName, HeaderValue, Method, Request, Response};
 use serde::de::DeserializeOwned;
@@ -12,6 +14,7 @@ pub struct RequestBuilder {
     headers: HeaderMap,
     query: Vec<(String, String)>,
     body: Bytes,
+    timeout: Option<Duration>,
 }
 
 impl RequestBuilder {
@@ -23,7 +26,13 @@ impl RequestBuilder {
             headers: HeaderMap::new(),
             query: Vec::new(),
             body: Bytes::new(),
+            timeout: None,
         }
+    }
+
+    pub fn timeout(mut self, duration: Duration) -> Self {
+        self.timeout = Some(duration);
+        self
     }
 
     pub fn header(mut self, name: impl AsRef<str>, value: impl AsRef<str>) -> Self {
@@ -111,7 +120,16 @@ impl RequestBuilder {
             Err(e) => return Err(Error::Other(e.to_string())),
         };
 
-        let response = self.client.execute(request).await?;
+        let response = match self.timeout {
+            Some(duration) => {
+                match tokio::time::timeout(duration, self.client.execute(request)).await {
+                    Ok(result) => result?,
+                    Err(_) => return Err(Error::Timeout),
+                }
+            }
+            None => self.client.execute(request).await?,
+        };
+
         Ok(RawResponse {
             client: self.client,
             response,

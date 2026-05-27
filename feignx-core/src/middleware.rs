@@ -15,6 +15,7 @@ pub trait Middleware: Send + Sync + 'static {
     ) -> Result<Response<Bytes>>;
 }
 
+#[derive(Clone)]
 pub struct Next<'a> {
     transport: &'a dyn Transport,
     middlewares: &'a [Arc<dyn Middleware>],

@@ -7,14 +7,18 @@ pub use feignx_core::interceptor;
 pub use feignx_core::log;
 pub use feignx_core::middleware;
 pub use feignx_core::part;
+pub use feignx_core::request;
 pub use feignx_core::resolver;
 pub use feignx_core::response;
+pub use feignx_core::retry;
 pub use feignx_core::stream;
 pub use feignx_core::timeout;
 pub use feignx_core::transport;
 
 pub use feignx_core::client::{Client, ClientBuilder};
 pub use feignx_core::error::{Error, Result};
+pub use feignx_core::log::{LogLevel, LoggingMiddleware};
+pub use feignx_core::retry::{BackoffStrategy, Retry};
 
 pub use ::bytes;
 pub use ::http;
