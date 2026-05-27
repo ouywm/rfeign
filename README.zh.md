@@ -2,7 +2,7 @@
 
 Rust 声明式 HTTP 客户端，灵感来自 OpenFeign / Retrofit。
 
-[English](README.md)
+[文档站](https://ouywm.github.io/rfeign/) | [English](README.md)
 
 ## 特性
 

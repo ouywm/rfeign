@@ -2,7 +2,7 @@
 
 A declarative HTTP client for Rust, inspired by OpenFeign / Retrofit.
 
-[中文文档](README.zh.md)
+[Documentation](https://ouywm.github.io/rfeign/) | [中文文档](README.zh.md)
 
 ## Features
 
