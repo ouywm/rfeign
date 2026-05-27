@@ -1,6 +1,5 @@
 [
-  {
-    "text": "指南",
-    "link": "/zh/guide/getting-started"
-  }
+  { "text": "指南", "link": "/zh/guide/getting-started" },
+  { "text": "功能", "link": "/zh/features/parameters" },
+  { "text": "服务发现", "link": "/zh/service-discovery/overview" }
 ]

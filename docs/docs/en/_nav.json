@@ -1,6 +1,5 @@
 [
-  {
-    "text": "Guide",
-    "link": "/en/guide/getting-started"
-  }
+  { "text": "Guide", "link": "/en/guide/getting-started" },
+  { "text": "Features", "link": "/en/features/parameters" },
+  { "text": "Service Discovery", "link": "/en/service-discovery/overview" }
 ]

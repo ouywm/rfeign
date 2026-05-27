@@ -1,0 +1,8 @@
+[
+  { "type": "file", "name": "parameters", "label": "Parameters" },
+  { "type": "file", "name": "resilience", "label": "Resilience" },
+  { "type": "file", "name": "multipart", "label": "File Upload" },
+  { "type": "file", "name": "auth", "label": "Authentication" },
+  { "type": "file", "name": "logging", "label": "Logging" },
+  { "type": "file", "name": "streaming", "label": "Streaming" }
+]

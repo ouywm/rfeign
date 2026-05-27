@@ -1,0 +1,5 @@
+[
+  { "type": "file", "name": "overview", "label": "Overview" },
+  { "type": "file", "name": "nacos", "label": "Nacos" },
+  { "type": "file", "name": "consul", "label": "Consul" }
+]
