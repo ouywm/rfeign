@@ -42,4 +42,4 @@ pub const TIMEOUT: Symbol = Symbol("timeout");
 
 pub const HTTP_METHODS: &[Symbol] = &[GET, POST, PUT, DELETE, PATCH, HEAD];
 pub const PARAM_ATTRS: &[Symbol] = &[PATH, QUERY, BODY, HEADER, HEADERS, PART];
-pub const METHOD_ATTRS: &[Symbol] = &[MULTIPART, TIMEOUT];
+pub const METHOD_ATTRS: &[Symbol] = &[MULTIPART, TIMEOUT, HEADER];

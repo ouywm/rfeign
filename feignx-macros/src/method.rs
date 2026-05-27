@@ -48,6 +48,7 @@ pub struct EndpointMethod {
     pub params: Vec<Param>,
     pub is_multipart: bool,
     pub timeout_ms: Option<u64>,
+    pub static_headers: Vec<(String, String)>,
 }
 
 pub fn parse(method: &syn::TraitItemFn, base_path: &str) -> Option<EndpointMethod> {
@@ -56,6 +57,7 @@ pub fn parse(method: &syn::TraitItemFn, base_path: &str) -> Option<EndpointMetho
     let params = extract_params(&method.sig);
     let is_multipart = has_attr(&method.attrs, MULTIPART);
     let timeout_ms = extract_timeout(&method.attrs);
+    let static_headers = extract_method_headers(&method.attrs);
 
     Some(EndpointMethod {
         http_method,
@@ -64,6 +66,7 @@ pub fn parse(method: &syn::TraitItemFn, base_path: &str) -> Option<EndpointMetho
         params,
         is_multipart,
         timeout_ms,
+        static_headers,
     })
 }
 
@@ -73,6 +76,7 @@ pub fn generate(endpoint: &EndpointMethod, class_headers: &[(String, String)]) -
     let url_expr = build_url_expr(&endpoint.path, &endpoint.params);
     let query_chain = build_query_chain(&endpoint.params);
     let class_header_chain = build_class_header_chain(class_headers);
+    let method_header_chain = build_class_header_chain(&endpoint.static_headers);
     let header_chain = build_header_chain(&endpoint.params);
     let timeout_chain = build_timeout_chain(endpoint.timeout_ms);
 
@@ -86,6 +90,7 @@ pub fn generate(endpoint: &EndpointMethod, class_headers: &[(String, String)]) -
         #sig {
             self.client.#method_name(#url_expr)
                 #class_header_chain
+                #method_header_chain
                 #query_chain
                 #header_chain
                 #timeout_chain
@@ -263,4 +268,24 @@ fn is_string_type(ty: &syn::Type) -> bool {
             .is_some_and(|seg| seg.ident == "String" || seg.ident == "str");
     }
     false
+}
+
+fn extract_method_headers(attrs: &[syn::Attribute]) -> Vec<(String, String)> {
+    let mut headers = Vec::new();
+    for attr in attrs {
+        if !HEADER.matches_last_segment(attr.path()) {
+            continue;
+        }
+        if let syn::Meta::List(list) = &attr.meta {
+            let parser =
+                syn::punctuated::Punctuated::<syn::LitStr, syn::Token![,]>::parse_terminated;
+            if let Ok(lits) = syn::parse::Parser::parse2(parser, list.tokens.clone()) {
+                let parts: Vec<_> = lits.into_iter().collect();
+                if parts.len() == 2 {
+                    headers.push((parts[0].value(), parts[1].value()));
+                }
+            }
+        }
+    }
+    headers
 }

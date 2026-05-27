@@ -26,6 +26,7 @@ struct ListParams {
 #[headers("X-App: feignx", "Accept: application/json")]
 trait UserApi {
     #[feignx::get("/users/{id}")]
+    #[feignx::header("X-Trace-Id", "abc-123")]
     async fn get_user(&self, #[path] id: i64) -> feignx::Result<User>;
 
     #[feignx::get("/users")]
