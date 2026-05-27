@@ -13,7 +13,7 @@ keywords = ["rfeign", "summer", "feign", "http-client", "microservice"]
 [dependencies]
 rfeign-core = { workspace = true }
 rfeign-reqwest = { workspace = true }
-summer = "0.7.1"
+summer = { workspace = true }
 async-trait = { workspace = true }
 serde = { workspace = true }
 tracing = { workspace = true }

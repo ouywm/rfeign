@@ -1,5 +1,5 @@
 [web]
-port = 8080
+port = 9090
 
 [rfeign]
 timeout_ms = 5000

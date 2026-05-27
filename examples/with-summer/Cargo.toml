@@ -9,8 +9,8 @@ publish = false
 rfeign = { path = "../../rfeign", features = ["summer"] }
 rfeign-core = { path = "../../rfeign-core" }
 summer-rfeign = { path = "../../summer-rfeign", features = ["nacos"] }
-summer = "0.7"
-summer-web = "0.7"
-summer-nacos = "0.7"
+summer = { workspace = true }
+summer-web = { workspace = true }
+summer-nacos = { workspace = true }
 tokio = { workspace = true }
 serde = { workspace = true }

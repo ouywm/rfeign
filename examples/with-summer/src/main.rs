@@ -8,20 +8,43 @@ use summer_web::{
     get, WebConfigurator, WebPlugin,
 };
 
-#[rfeign::http_client(service = "user-service")]
+#[rfeign::http_client(service = "user_service", path = "/api")]
 trait UserApi {
-    #[rfeign::get("/users/{id}")]
+    #[rfeign::get("/user/{id}")]
     async fn get_user(&self, #[path] id: i64) -> rfeign::Result<User>;
-
-    #[rfeign::get("/users")]
-    async fn list_users(&self, #[query] page: u32, #[query] size: u32)
-        -> rfeign::Result<Vec<User>>;
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct User {
-    id: i64,
-    name: String,
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct User {
+    #[serde(flatten)]
+    pub user: UserVo,
+    pub roles: Vec<RoleDetailVo>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UserVo {
+    pub id: i64,
+    pub avatar: String,
+    pub status: i16,
+    pub user_name: String,
+    pub user_gender: String,
+    pub nick_name: String,
+    pub user_phone: String,
+    pub user_email: String,
+    pub create_by: String,
+    pub create_time: String,
+    pub update_by: String,
+    pub update_time: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RoleDetailVo {
+    pub role_id: i64,
+    pub role_name: String,
+    pub role_code: String,
 }
 
 #[get("/user/{id}")]
@@ -33,16 +56,6 @@ async fn get_user(
         summer_web::error::KnownWebError::internal_server_error(e.to_string())
     })?;
     Ok(summer_web::axum::Json(user))
-}
-
-#[get("/users")]
-async fn list_users(
-    Component(api): Component<UserApiClient>,
-) -> Result<impl IntoResponse> {
-    let users = api.list_users(1, 10).await.map_err(|e| {
-        summer_web::error::KnownWebError::internal_server_error(e.to_string())
-    })?;
-    Ok(summer_web::axum::Json(users))
 }
 
 #[auto_config(WebConfigurator)]
