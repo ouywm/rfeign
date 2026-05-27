@@ -1,5 +1,6 @@
 use proc_macro::TokenStream;
 
+mod args;
 mod client;
 mod method;
 mod multipart;
@@ -43,6 +44,30 @@ pub fn http_client(attr: TokenStream, item: TokenStream) -> TokenStream {
 #[proc_macro_derive(RequestParam, attributes(param))]
 pub fn derive_request_param(item: TokenStream) -> TokenStream {
     request_param::expand(item)
+}
+
+/// Derives `ArgsProvider` for a struct, enabling it as a combined parameter object.
+///
+/// Fields can be annotated with `#[path]`, `#[query]`, `#[body]`, `#[header("name")]`.
+///
+/// # Example
+///
+/// ```ignore
+/// #[derive(rfeign::Args)]
+/// struct SearchArgs {
+///     #[path]
+///     id: i64,
+///     #[query]
+///     page: u32,
+///     #[body]
+///     filter: Filter,
+///     #[header("Authorization")]
+///     token: String,
+/// }
+/// ```
+#[proc_macro_derive(Args, attributes(path, query, body, header))]
+pub fn derive_args(item: TokenStream) -> TokenStream {
+    args::expand(item)
 }
 
 macro_rules! define_method_macro {

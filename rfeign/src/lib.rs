@@ -1,3 +1,5 @@
+pub use rfeign_core::args;
+pub use rfeign_core::args::ArgsProvider;
 pub use rfeign_core::auth;
 pub use rfeign_core::client;
 pub use rfeign_core::codec;

@@ -10,6 +10,7 @@ pub enum ParamKind {
     Header { name: String },
     Headers,
     Part { name: String },
+    Args,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -81,6 +82,9 @@ fn resolve_kind(attrs: &[syn::Attribute], ident: &syn::Ident) -> ParamKind {
                 None => ident.to_string(),
             };
             return ParamKind::Part { name };
+        }
+        if *path == ARGS {
+            return ParamKind::Args;
         }
     }
     ParamKind::Body

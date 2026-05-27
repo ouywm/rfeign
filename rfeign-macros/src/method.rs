@@ -73,12 +73,41 @@ pub fn parse(method: &syn::TraitItemFn, base_path: &str) -> Option<EndpointMetho
 pub fn generate(endpoint: &EndpointMethod, class_headers: &[(String, String)]) -> TokenStream {
     let sig = strip_param_attrs(&endpoint.sig);
     let method_name = endpoint.http_method.to_method_name();
-    let url_expr = build_url_expr(&endpoint.path, &endpoint.params);
-    let query_chain = build_query_chain(&endpoint.params);
     let class_header_chain = build_class_header_chain(class_headers);
     let method_header_chain = build_class_header_chain(&endpoint.static_headers);
-    let header_chain = build_header_chain(&endpoint.params);
     let timeout_chain = build_timeout_chain(endpoint.timeout_ms);
+
+    let args_param = endpoint.params.iter().find(|p| matches!(p.kind, ParamKind::Args));
+
+    if let Some(args_p) = args_param {
+        let args_ident = &args_p.ident;
+        let url_expr = build_url_expr(&endpoint.path, &endpoint.params);
+        return quote! {
+            #sig {
+                use rfeign::ArgsProvider;
+                let mut __url = #url_expr.to_string();
+                for (name, value) in #args_ident.path_params() {
+                    __url = __url.replace(&format!("{{{}}}", name), &value);
+                }
+                let mut __req = self.client.#method_name(__url)
+                    #class_header_chain
+                    #method_header_chain
+                    #timeout_chain;
+                __req = __req.query_pairs(#args_ident.query_pairs());
+                for (name, value) in #args_ident.headers() {
+                    __req = __req.header(name, &value);
+                }
+                if let Some(body) = #args_ident.body_bytes() {
+                    __req = __req.body(body);
+                }
+                __req.send().await?.json()
+            }
+        };
+    }
+
+    let url_expr = build_url_expr(&endpoint.path, &endpoint.params);
+    let query_chain = build_query_chain(&endpoint.params);
+    let header_chain = build_header_chain(&endpoint.params);
 
     let body_or_parts = if endpoint.is_multipart {
         build_multipart_chain(&endpoint.params)
