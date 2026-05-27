@@ -96,6 +96,27 @@ impl Client {
         Ok(response)
     }
 
+    pub async fn execute_plain(&self, request: Request<Bytes>) -> Result<Response<Bytes>> {
+        self.execute(request).await
+    }
+
+    pub async fn execute_multipart(
+        &self,
+        mut request: Request<Bytes>,
+        parts: Vec<(String, crate::transport::MultipartField)>,
+    ) -> Result<Response<Bytes>> {
+        if let Some(auth) = &self.auth {
+            auth.authenticate(&mut request).await?;
+        }
+
+        for interceptor in &self.request_interceptors {
+            request = interceptor.intercept(request).await?;
+        }
+
+        let response = self.transport.send_multipart(request, parts).await?;
+        Ok(response)
+    }
+
     pub fn request(&self, method: http::Method, path: impl Into<String>) -> crate::request::RequestBuilder {
         crate::request::RequestBuilder::new(self.clone(), method, path)
     }

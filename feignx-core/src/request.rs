@@ -6,6 +6,8 @@ use serde::de::DeserializeOwned;
 
 use crate::client::Client;
 use crate::error::{Error, Result};
+use crate::part::Part;
+use crate::transport::MultipartField;
 
 pub struct RequestBuilder {
     client: Client,
@@ -15,6 +17,7 @@ pub struct RequestBuilder {
     query: Vec<(String, String)>,
     body: Bytes,
     timeout: Option<Duration>,
+    multipart: Option<Vec<(String, MultipartField)>>,
 }
 
 impl RequestBuilder {
@@ -27,11 +30,24 @@ impl RequestBuilder {
             query: Vec::new(),
             body: Bytes::new(),
             timeout: None,
+            multipart: None,
         }
     }
 
     pub fn timeout(mut self, duration: Duration) -> Self {
         self.timeout = Some(duration);
+        self
+    }
+
+    pub fn part(mut self, name: impl Into<String>, file: Part) -> Self {
+        let parts = self.multipart.get_or_insert_with(Vec::new);
+        parts.push((name.into(), MultipartField::File(file)));
+        self
+    }
+
+    pub fn text_part(mut self, name: impl Into<String>, value: impl Into<String>) -> Self {
+        let parts = self.multipart.get_or_insert_with(Vec::new);
+        parts.push((name.into(), MultipartField::Text(value.into())));
         self
     }
 
@@ -122,12 +138,21 @@ impl RequestBuilder {
 
         let response = match self.timeout {
             Some(duration) => {
-                match tokio::time::timeout(duration, self.client.execute(request)).await {
+                let fut = async {
+                    match self.multipart {
+                        Some(parts) => self.client.execute_multipart(request, parts).await,
+                        None => self.client.execute(request).await,
+                    }
+                };
+                match tokio::time::timeout(duration, fut).await {
                     Ok(result) => result?,
                     Err(_) => return Err(Error::Timeout),
                 }
             }
-            None => self.client.execute(request).await?,
+            None => match self.multipart {
+                Some(parts) => self.client.execute_multipart(request, parts).await?,
+                None => self.client.execute(request).await?,
+            },
         };
 
         Ok(RawResponse {

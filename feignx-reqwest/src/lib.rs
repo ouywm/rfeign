@@ -3,6 +3,7 @@ use bytes::Bytes;
 use http::{Request, Response};
 
 use feignx_core::error::{Error, Result};
+use feignx_core::transport::MultipartField;
 use feignx_core::transport::Transport;
 
 pub struct ReqwestTransport {
@@ -124,6 +125,66 @@ impl Transport for ReqwestTransport {
                     .map_err(|e| Error::Transport(Box::new(e)))?
             }
         };
+
+        let status = resp.status();
+        let headers = resp.headers().clone();
+        let resp_body = resp
+            .bytes()
+            .await
+            .map_err(|e| Error::Transport(Box::new(e)))?;
+
+        let mut response = Response::builder().status(status);
+        if let Some(h) = response.headers_mut() {
+            *h = headers;
+        }
+        match response.body(resp_body) {
+            Ok(r) => Ok(r),
+            Err(e) => Err(Error::Other(e.to_string())),
+        }
+    }
+
+    async fn send_multipart(
+        &self,
+        request: Request<Bytes>,
+        parts: Vec<(String, MultipartField)>,
+    ) -> Result<Response<Bytes>> {
+        let (req_parts, _) = request.into_parts();
+        let url = req_parts.uri.to_string();
+        let method = reqwest::Method::from_bytes(req_parts.method.as_str().as_bytes())
+            .unwrap_or(reqwest::Method::POST);
+
+        let mut form = reqwest::multipart::Form::new();
+        for (name, field) in parts {
+            match field {
+                MultipartField::Text(text) => {
+                    form = form.text(name, text);
+                }
+                MultipartField::File(part) => {
+                    let rpart = reqwest::multipart::Part::bytes(part.data.to_vec())
+                        .file_name(part.filename)
+                        .mime_str(&part.content_type)
+                        .unwrap_or_else(|_| reqwest::multipart::Part::bytes(Vec::new()));
+                    form = form.part(name, rpart);
+                }
+            }
+        }
+
+        let mut req = match &self.inner {
+            InnerClient::Plain(c) => c.request(method, &url),
+            #[cfg(feature = "middleware")]
+            InnerClient::WithMiddleware(_) => {
+                reqwest::Client::new().request(method, &url)
+            }
+        };
+        for (name, value) in &req_parts.headers {
+            req = req.header(name.as_str(), value.as_bytes());
+        }
+
+        let resp = req
+            .multipart(form)
+            .send()
+            .await
+            .map_err(|e| Error::Transport(Box::new(e)))?;
 
         let status = resp.status();
         let headers = resp.headers().clone();
