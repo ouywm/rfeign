@@ -432,7 +432,6 @@ name = "feignx"
 version = "0.0.1"
 dependencies = [
  "async-trait",
- "backon",
  "bytes",
  "failsafe",
  "feignx-core",
@@ -440,9 +439,6 @@ dependencies = [
  "feignx-reqwest",
  "http",
  "nacos-sdk",
- "reqwest-middleware",
- "reqwest-retry",
- "reqwest-tracing",
  "serde",
  "serde_json",
  "serde_urlencoded",
@@ -480,10 +476,14 @@ name = "feignx-reqwest"
 version = "0.0.1"
 dependencies = [
  "async-trait",
+ "backon",
  "bytes",
  "feignx-core",
  "http",
  "reqwest 0.13.4",
+ "reqwest-middleware",
+ "reqwest-retry",
+ "reqwest-tracing",
 ]
 
 [[package]]
