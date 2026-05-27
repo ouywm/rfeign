@@ -73,17 +73,19 @@ pub fn parse(method: &syn::TraitItemFn, base_path: &str) -> Option<EndpointMetho
     })
 }
 
-pub fn generate(endpoint: &EndpointMethod) -> TokenStream {
+pub fn generate(endpoint: &EndpointMethod, class_headers: &[(String, String)]) -> TokenStream {
     let sig = strip_param_attrs(&endpoint.sig);
     let method_name = endpoint.http_method.to_method_name();
     let url_expr = build_url_expr(&endpoint.path, &endpoint.params);
     let query_chain = build_query_chain(&endpoint.params);
+    let class_header_chain = build_class_header_chain(class_headers);
     let header_chain = build_header_chain(&endpoint.params);
     let body_chain = build_body_chain(&endpoint.params);
 
     quote! {
         #sig {
             self.client.#method_name(#url_expr)
+                #class_header_chain
                 #query_chain
                 #header_chain
                 #body_chain
@@ -92,6 +94,15 @@ pub fn generate(endpoint: &EndpointMethod) -> TokenStream {
                 .json()
         }
     }
+}
+
+fn build_class_header_chain(headers: &[(String, String)]) -> TokenStream {
+    let calls: Vec<_> = headers
+        .iter()
+        .map(|(k, v)| quote! { .header(#k, #v) })
+        .collect();
+
+    quote! { #(#calls)* }
 }
 
 fn extract_http_attr(method: &syn::TraitItemFn) -> Option<(HttpMethod, String)> {

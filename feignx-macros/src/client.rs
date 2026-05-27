@@ -32,6 +32,7 @@ pub fn expand(attr: TokenStream, item: TokenStream) -> TokenStream {
     };
 
     let base_path = client_attr.path.clone().unwrap_or_default();
+    let class_headers = extract_class_headers(&input);
     let endpoints: Vec<_> = input
         .items
         .iter()
@@ -45,7 +46,7 @@ pub fn expand(attr: TokenStream, item: TokenStream) -> TokenStream {
     let struct_name = format_ident!("{}Client", trait_name);
     let vis = &input.vis;
     let clean_trait = strip_trait_attrs(&input);
-    let methods = endpoints.iter().map(method::generate);
+    let methods = endpoints.iter().map(|e| method::generate(e, &class_headers));
     let metadata = build_metadata_methods(&client_attr);
 
     let output = quote! {
@@ -97,6 +98,7 @@ fn build_metadata_methods(attr: &HttpClientAttr) -> proc_macro2::TokenStream {
 
 fn strip_trait_attrs(input: &ItemTrait) -> ItemTrait {
     let mut clean = input.clone();
+    clean.attrs.retain(|attr| !attr.path().is_ident("headers"));
     for item in &mut clean.items {
         if let TraitItem::Fn(m) = item {
             m.attrs.retain(|attr| {
@@ -112,4 +114,27 @@ fn strip_trait_attrs(input: &ItemTrait) -> ItemTrait {
         }
     }
     clean
+}
+
+/// Extracts `#[headers("Key: Value", ...)]` from the trait-level attributes.
+/// Returns a list of (name, value) pairs.
+pub fn extract_class_headers(input: &ItemTrait) -> Vec<(String, String)> {
+    let mut headers = Vec::new();
+    for attr in &input.attrs {
+        if !attr.path().is_ident("headers") {
+            continue;
+        }
+        if let syn::Meta::List(list) = &attr.meta {
+            let parser = syn::punctuated::Punctuated::<syn::LitStr, syn::Token![,]>::parse_terminated;
+            if let Ok(lits) = syn::parse::Parser::parse2(parser, list.tokens.clone()) {
+                for lit in lits {
+                    let s = lit.value();
+                    if let Some((k, v)) = s.split_once(':') {
+                        headers.push((k.trim().to_string(), v.trim().to_string()));
+                    }
+                }
+            }
+        }
+    }
+    headers
 }

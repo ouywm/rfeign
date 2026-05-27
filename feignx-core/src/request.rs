@@ -52,6 +52,11 @@ impl RequestBuilder {
         self
     }
 
+    pub fn query_pairs(mut self, pairs: Vec<(String, String)>) -> Self {
+        self.query.extend(pairs);
+        self
+    }
+
     pub fn headers_map(mut self, map: &std::collections::HashMap<String, String>) -> Self {
         for (k, v) in map {
             if let (Ok(n), Ok(val)) = (

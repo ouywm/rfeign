@@ -28,6 +28,23 @@ pub fn http_client(attr: TokenStream, item: TokenStream) -> TokenStream {
     client::expand(attr, item)
 }
 
+/// Derives `to_query_pairs()` for a struct, enabling it as a query parameter object.
+///
+/// # Example
+///
+/// ```ignore
+/// #[derive(feignx::RequestParam)]
+/// struct ListParams {
+///     page: u32,
+///     #[param(name = "q")]
+///     keyword: Option<String>,
+/// }
+/// ```
+#[proc_macro_derive(RequestParam, attributes(param))]
+pub fn derive_request_param(item: TokenStream) -> TokenStream {
+    request_param::expand(item)
+}
+
 macro_rules! define_method_macro {
     ($($(#[$meta:meta])* $name:ident),* $(,)?) => {
         $(
