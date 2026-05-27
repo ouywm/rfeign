@@ -13,7 +13,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.0.2"
+version = "0.0.3"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 authors = ["ouywm"]
@@ -22,10 +22,10 @@ categories = ["web-programming::http-client", "asynchronous"]
 keywords = ["http-client", "declarative", "feign", "microservice", "async"]
 
 [workspace.dependencies]
-rfeign = { path = "rfeign", version = "0.0.2" }
-rfeign-core = { path = "rfeign-core", version = "0.0.2" }
-rfeign-macros = { path = "rfeign-macros", version = "0.0.2" }
-rfeign-reqwest = { path = "rfeign-reqwest", version = "0.0.2" }
+rfeign = { path = "rfeign", version = "0.0.3" }
+rfeign-core = { path = "rfeign-core", version = "0.0.3" }
+rfeign-macros = { path = "rfeign-macros", version = "0.0.3" }
+rfeign-reqwest = { path = "rfeign-reqwest", version = "0.0.3" }
 http = "1.4"
 bytes = "1.11"
 reqwest = { version = "0.13", features = ["json", "multipart", "stream"] }
