@@ -7,6 +7,7 @@ pub mod interceptor;
 pub mod log;
 pub mod middleware;
 pub mod part;
+pub mod request;
 pub mod resolver;
 pub mod response;
 pub mod stream;

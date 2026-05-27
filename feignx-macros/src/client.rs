@@ -31,7 +31,7 @@ pub fn expand(attr: TokenStream, item: TokenStream) -> TokenStream {
         Err(e) => return e.write_errors().into(),
     };
 
-    let base_path = client_attr.path.unwrap_or_default();
+    let base_path = client_attr.path.clone().unwrap_or_default();
     let endpoints: Vec<_> = input
         .items
         .iter()
@@ -46,6 +46,7 @@ pub fn expand(attr: TokenStream, item: TokenStream) -> TokenStream {
     let vis = &input.vis;
     let clean_trait = strip_trait_attrs(&input);
     let methods = endpoints.iter().map(method::generate);
+    let metadata = build_metadata_methods(&client_attr);
 
     let output = quote! {
         #[feignx::async_trait]
@@ -60,6 +61,8 @@ pub fn expand(attr: TokenStream, item: TokenStream) -> TokenStream {
             pub fn new(client: feignx::client::Client) -> Self {
                 Self { client }
             }
+
+            #metadata
         }
 
         #[feignx::async_trait]
@@ -69,6 +72,27 @@ pub fn expand(attr: TokenStream, item: TokenStream) -> TokenStream {
     };
 
     output.into()
+}
+
+fn build_metadata_methods(attr: &HttpClientAttr) -> proc_macro2::TokenStream {
+    let base_url = match &attr.base_url {
+        Some(v) => quote! { Some(#v) },
+        None => quote! { None },
+    };
+    let service = match &attr.service {
+        Some(v) => quote! { Some(#v) },
+        None => quote! { None },
+    };
+    let path = match &attr.path {
+        Some(v) => v.clone(),
+        None => String::new(),
+    };
+
+    quote! {
+        pub fn base_url() -> Option<&'static str> { #base_url }
+        pub fn service_name() -> Option<&'static str> { #service }
+        pub fn path() -> &'static str { #path }
+    }
 }
 
 fn strip_trait_attrs(input: &ItemTrait) -> ItemTrait {

@@ -1,7 +1,5 @@
-pub mod http;
-
-use feignx::ReqwestTransport;
 use feignx::client::ClientBuilder;
+use feignx::ReqwestTransport;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize)]
@@ -21,13 +19,18 @@ trait UserApi {
     async fn get_user(&self, #[path] id: i64) -> feignx::Result<User>;
 
     #[feignx::get("/users")]
-    async fn list_users(&self, #[query] page: u32, #[query] size: u32) -> feignx::Result<Vec<User>>;
+    async fn list_users(&self, #[query] page: u32, #[query] size: u32)
+    -> feignx::Result<Vec<User>>;
 
     #[feignx::post("/users")]
     async fn create_user(&self, #[body] user: CreateUser) -> feignx::Result<User>;
 
     #[feignx::delete("/users/{id}")]
-    async fn delete_user(&self, #[path] id: i64, #[header("Authorization")] token: String) -> feignx::Result<()>;
+    async fn delete_user(
+        &self,
+        #[path] id: i64,
+        #[header("Authorization")] token: String,
+    ) -> feignx::Result<()>;
 }
 
 #[tokio::main]
@@ -37,5 +40,8 @@ async fn main() {
         .build();
 
     let _api = UserApiClient::new(client);
-    println!("UserApiClient created with all methods");
+
+    println!("base_url: {:?}", UserApiClient::base_url());
+    println!("service:  {:?}", UserApiClient::service_name());
+    println!("path:     {:?}", UserApiClient::path());
 }

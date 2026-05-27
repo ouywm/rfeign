@@ -39,6 +39,18 @@ impl HttpMethod {
         };
         format_ident!("{}", name)
     }
+
+    pub fn to_method_name(self) -> syn::Ident {
+        let name = match self {
+            Self::Get => "get",
+            Self::Post => "post",
+            Self::Put => "put",
+            Self::Delete => "delete",
+            Self::Patch => "patch",
+            Self::Head => "head",
+        };
+        format_ident!("{}", name)
+    }
 }
 
 pub struct EndpointMethod {
@@ -63,28 +75,21 @@ pub fn parse(method: &syn::TraitItemFn, base_path: &str) -> Option<EndpointMetho
 
 pub fn generate(endpoint: &EndpointMethod) -> TokenStream {
     let sig = strip_param_attrs(&endpoint.sig);
-    let http_method = endpoint.http_method.to_ident();
+    let method_name = endpoint.http_method.to_method_name();
     let url_expr = build_url_expr(&endpoint.path, &endpoint.params);
-    let query_stmts = build_query_stmts(&endpoint.params);
-    let body_expr = build_body_expr(&endpoint.params);
-    let header_stmts = build_header_stmts(&endpoint.params);
+    let query_chain = build_query_chain(&endpoint.params);
+    let header_chain = build_header_chain(&endpoint.params);
+    let body_chain = build_body_chain(&endpoint.params);
 
     quote! {
         #sig {
-            let mut url = self.client.resolve_url(&#url_expr).await?;
-            #query_stmts
-
-            let mut builder = feignx::http::Request::builder()
-                .method(feignx::http::Method::#http_method)
-                .uri(&url);
-            #header_stmts
-
-            let body = #body_expr;
-            let request = match builder.body(body) {
-                Ok(r) => r,
-                Err(e) => return Err(feignx::Error::Other(e.to_string())),
-            };
-            self.client.send_and_decode(request).await
+            self.client.#method_name(#url_expr)
+                #query_chain
+                #header_chain
+                #body_chain
+                .send()
+                .await?
+                .json()
         }
     }
 }
@@ -142,8 +147,8 @@ fn build_url_expr(path: &str, params: &[Param]) -> TokenStream {
     }
 }
 
-fn build_query_stmts(params: &[Param]) -> TokenStream {
-    let pairs: Vec<_> = params
+fn build_query_chain(params: &[Param]) -> TokenStream {
+    let calls: Vec<_> = params
         .iter()
         .filter_map(|p| {
             let ParamKind::Query { name } = &p.kind else {
@@ -155,60 +160,39 @@ fn build_query_stmts(params: &[Param]) -> TokenStream {
                 None => ident.to_string(),
             };
             Some(quote! {
-                (#key, feignx::serde_urlencoded::to_string(&#ident).unwrap_or_default())
+                .query_pair(#key, &feignx::serde_urlencoded::to_string(&#ident).unwrap_or_default())
             })
         })
         .collect();
 
-    if pairs.is_empty() {
-        return TokenStream::new();
-    }
-
-    quote! {
-        let qs = [#(#pairs),*]
-            .iter()
-            .filter(|(_, v)| !v.is_empty())
-            .map(|(k, v)| format!("{}={}", k, v))
-            .collect::<Vec<_>>()
-            .join("&");
-        if !qs.is_empty() {
-            url.push('?');
-            url.push_str(&qs);
-        }
-    }
+    quote! { #(#calls)* }
 }
 
-fn build_body_expr(params: &[Param]) -> TokenStream {
+fn build_body_chain(params: &[Param]) -> TokenStream {
     for param in params {
         if matches!(param.kind, ParamKind::Body) {
             let ident = &param.ident;
-            return quote! { self.client.encode_body(&#ident)? };
+            return quote! { .json(&#ident)? };
         }
     }
-    quote! { feignx::bytes::Bytes::new() }
+    TokenStream::new()
 }
 
-fn build_header_stmts(params: &[Param]) -> TokenStream {
-    let stmts: Vec<_> = params
+fn build_header_chain(params: &[Param]) -> TokenStream {
+    let calls: Vec<_> = params
         .iter()
         .filter_map(|p| match &p.kind {
             ParamKind::Header { name } => {
                 let ident = &p.ident;
-                Some(quote! {
-                    builder = builder.header(#name, #ident.to_string());
-                })
+                Some(quote! { .header(#name, &#ident.to_string()) })
             }
             ParamKind::Headers => {
                 let ident = &p.ident;
-                Some(quote! {
-                    for (k, v) in &#ident {
-                        builder = builder.header(k.as_str(), v.as_str());
-                    }
-                })
+                Some(quote! { .headers_map(&#ident) })
             }
             _ => None,
         })
         .collect();
 
-    quote! { #(#stmts)* }
+    quote! { #(#calls)* }
 }

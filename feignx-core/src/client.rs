@@ -96,6 +96,34 @@ impl Client {
         Ok(response)
     }
 
+    pub fn request(&self, method: http::Method, path: impl Into<String>) -> crate::request::RequestBuilder {
+        crate::request::RequestBuilder::new(self.clone(), method, path)
+    }
+
+    pub fn get(&self, path: impl Into<String>) -> crate::request::RequestBuilder {
+        self.request(http::Method::GET, path)
+    }
+
+    pub fn post(&self, path: impl Into<String>) -> crate::request::RequestBuilder {
+        self.request(http::Method::POST, path)
+    }
+
+    pub fn put(&self, path: impl Into<String>) -> crate::request::RequestBuilder {
+        self.request(http::Method::PUT, path)
+    }
+
+    pub fn delete(&self, path: impl Into<String>) -> crate::request::RequestBuilder {
+        self.request(http::Method::DELETE, path)
+    }
+
+    pub fn patch(&self, path: impl Into<String>) -> crate::request::RequestBuilder {
+        self.request(http::Method::PATCH, path)
+    }
+
+    pub fn head(&self, path: impl Into<String>) -> crate::request::RequestBuilder {
+        self.request(http::Method::HEAD, path)
+    }
+
     pub async fn resolve_url(&self, path: &str) -> Result<String> {
         let base = self.url_resolver.resolve("").await?;
         Ok(format!("{}{}", base, path))
