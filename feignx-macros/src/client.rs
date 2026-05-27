@@ -103,6 +103,7 @@ fn strip_trait_attrs(input: &ItemTrait) -> ItemTrait {
         if let TraitItem::Fn(m) = item {
             m.attrs.retain(|attr| {
                 !HTTP_METHODS.iter().any(|s| s.matches_last_segment(attr.path()))
+                && !METHOD_ATTRS.iter().any(|s| s.matches_last_segment(attr.path()))
             });
             for arg in &mut m.sig.inputs {
                 if let FnArg::Typed(pat_type) = arg {

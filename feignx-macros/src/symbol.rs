@@ -36,6 +36,10 @@ pub const QUERY: Symbol = Symbol("query");
 pub const BODY: Symbol = Symbol("body");
 pub const HEADER: Symbol = Symbol("header");
 pub const HEADERS: Symbol = Symbol("headers");
+pub const PART: Symbol = Symbol("part");
+pub const MULTIPART: Symbol = Symbol("multipart");
+pub const TIMEOUT: Symbol = Symbol("timeout");
 
 pub const HTTP_METHODS: &[Symbol] = &[GET, POST, PUT, DELETE, PATCH, HEAD];
-pub const PARAM_ATTRS: &[Symbol] = &[PATH, QUERY, BODY, HEADER, HEADERS];
+pub const PARAM_ATTRS: &[Symbol] = &[PATH, QUERY, BODY, HEADER, HEADERS, PART];
+pub const METHOD_ATTRS: &[Symbol] = &[MULTIPART, TIMEOUT];

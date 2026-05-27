@@ -1,7 +1,6 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, DeriveInput, Data, Fields, Meta, Expr, Lit};
-use proc_macro2::TokenStream as TokenStream2;
+use syn::{parse_macro_input, DeriveInput, Data, Fields, Meta};
 
 pub fn expand(item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as DeriveInput);
@@ -25,7 +24,10 @@ pub fn expand(item: TokenStream) -> TokenStream {
         .iter()
         .map(|f| {
             let ident = f.ident.as_ref().expect("named field");
-            let param_name = extract_param_name(f).unwrap_or_else(|| ident.to_string());
+            let param_name = match extract_param_name(f) {
+                Some(n) => n,
+                None => ident.to_string(),
+            };
             let is_option = is_option_type(&f.ty);
 
             if is_option {
@@ -75,9 +77,8 @@ fn extract_param_name(field: &syn::Field) -> Option<String> {
 
 fn is_option_type(ty: &syn::Type) -> bool {
     if let syn::Type::Path(type_path) = ty {
-        if let Some(seg) = type_path.path.segments.last() {
-            return seg.ident == "Option";
-        }
+        return type_path.path.segments.last()
+            .is_some_and(|seg| seg.ident == "Option");
     }
     false
 }

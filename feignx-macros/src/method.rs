@@ -28,18 +28,6 @@ impl HttpMethod {
         }
     }
 
-    pub fn to_ident(self) -> syn::Ident {
-        let name = match self {
-            Self::Get => "GET",
-            Self::Post => "POST",
-            Self::Put => "PUT",
-            Self::Delete => "DELETE",
-            Self::Patch => "PATCH",
-            Self::Head => "HEAD",
-        };
-        format_ident!("{}", name)
-    }
-
     pub fn to_method_name(self) -> syn::Ident {
         let name = match self {
             Self::Get => "get",
@@ -58,18 +46,24 @@ pub struct EndpointMethod {
     pub path: String,
     pub sig: syn::Signature,
     pub params: Vec<Param>,
+    pub is_multipart: bool,
+    pub timeout_ms: Option<u64>,
 }
 
 pub fn parse(method: &syn::TraitItemFn, base_path: &str) -> Option<EndpointMethod> {
     let (http_method, route) = extract_http_attr(method)?;
     let path = format!("{}{}", base_path, route);
     let params = extract_params(&method.sig);
+    let is_multipart = has_attr(&method.attrs, MULTIPART);
+    let timeout_ms = extract_timeout(&method.attrs);
 
     Some(EndpointMethod {
         http_method,
         path,
         sig: method.sig.clone(),
         params,
+        is_multipart,
+        timeout_ms,
     })
 }
 
@@ -80,7 +74,13 @@ pub fn generate(endpoint: &EndpointMethod, class_headers: &[(String, String)]) -
     let query_chain = build_query_chain(&endpoint.params);
     let class_header_chain = build_class_header_chain(class_headers);
     let header_chain = build_header_chain(&endpoint.params);
-    let body_chain = build_body_chain(&endpoint.params);
+    let timeout_chain = build_timeout_chain(endpoint.timeout_ms);
+
+    let body_or_parts = if endpoint.is_multipart {
+        build_multipart_chain(&endpoint.params)
+    } else {
+        build_body_chain(&endpoint.params)
+    };
 
     quote! {
         #sig {
@@ -88,7 +88,8 @@ pub fn generate(endpoint: &EndpointMethod, class_headers: &[(String, String)]) -
                 #class_header_chain
                 #query_chain
                 #header_chain
-                #body_chain
+                #timeout_chain
+                #body_or_parts
                 .send()
                 .await?
                 .json()
@@ -206,4 +207,60 @@ fn build_header_chain(params: &[Param]) -> TokenStream {
         .collect();
 
     quote! { #(#calls)* }
+}
+
+fn build_multipart_chain(params: &[Param]) -> TokenStream {
+    let calls: Vec<_> = params
+        .iter()
+        .filter_map(|p| {
+            if let ParamKind::Part { name } = &p.kind {
+                let ident = &p.ident;
+                if is_string_type(&p.ty) {
+                    Some(quote! { .text_part(#name, #ident) })
+                } else {
+                    Some(quote! { .part(#name, #ident) })
+                }
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    quote! { #(#calls)* }
+}
+
+fn build_timeout_chain(timeout_ms: Option<u64>) -> TokenStream {
+    match timeout_ms {
+        Some(ms) => quote! {
+            .timeout(::std::time::Duration::from_millis(#ms))
+        },
+        None => TokenStream::new(),
+    }
+}
+
+fn has_attr(attrs: &[syn::Attribute], sym: Symbol) -> bool {
+    attrs.iter().any(|a| sym.matches_last_segment(a.path()))
+}
+
+fn extract_timeout(attrs: &[syn::Attribute]) -> Option<u64> {
+    for attr in attrs {
+        if !TIMEOUT.matches_last_segment(attr.path()) {
+            continue;
+        }
+        if let syn::Meta::List(list) = &attr.meta {
+            let tokens = list.tokens.to_string();
+            if let Ok(ms) = tokens.trim().parse::<u64>() {
+                return Some(ms);
+            }
+        }
+    }
+    None
+}
+
+fn is_string_type(ty: &syn::Type) -> bool {
+    if let syn::Type::Path(p) = ty {
+        return p.path.segments.last()
+            .is_some_and(|seg| seg.ident == "String" || seg.ident == "str");
+    }
+    false
 }

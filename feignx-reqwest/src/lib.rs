@@ -99,8 +99,10 @@ impl Transport for ReqwestTransport {
     async fn send(&self, request: Request<Bytes>) -> Result<Response<Bytes>> {
         let (parts, body) = request.into_parts();
         let url = parts.uri.to_string();
-        let method = reqwest::Method::from_bytes(parts.method.as_str().as_bytes())
-            .unwrap_or(reqwest::Method::GET);
+        let method = match reqwest::Method::from_bytes(parts.method.as_str().as_bytes()) {
+            Ok(m) => m,
+            Err(_) => reqwest::Method::GET,
+        };
 
         let resp = match &self.inner {
             InnerClient::Plain(client) => {
@@ -150,8 +152,10 @@ impl Transport for ReqwestTransport {
     ) -> Result<Response<Bytes>> {
         let (req_parts, _) = request.into_parts();
         let url = req_parts.uri.to_string();
-        let method = reqwest::Method::from_bytes(req_parts.method.as_str().as_bytes())
-            .unwrap_or(reqwest::Method::POST);
+        let method = match reqwest::Method::from_bytes(req_parts.method.as_str().as_bytes()) {
+            Ok(m) => m,
+            Err(_) => reqwest::Method::POST,
+        };
 
         let mut form = reqwest::multipart::Form::new();
         for (name, field) in parts {
@@ -160,10 +164,12 @@ impl Transport for ReqwestTransport {
                     form = form.text(name, text);
                 }
                 MultipartField::File(part) => {
-                    let rpart = reqwest::multipart::Part::bytes(part.data.to_vec())
-                        .file_name(part.filename)
-                        .mime_str(&part.content_type)
-                        .unwrap_or_else(|_| reqwest::multipart::Part::bytes(Vec::new()));
+                    let base = reqwest::multipart::Part::bytes(part.data.to_vec())
+                        .file_name(part.filename);
+                    let rpart = match base.mime_str(&part.content_type) {
+                        Ok(p) => p,
+                        Err(_) => reqwest::multipart::Part::bytes(Vec::new()),
+                    };
                     form = form.part(name, rpart);
                 }
             }

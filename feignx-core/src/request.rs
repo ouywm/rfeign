@@ -131,6 +131,29 @@ impl RequestBuilder {
         url
     }
 
+    pub fn to_curl(&self) -> String {
+        let url = format!("<base_url>{}", self.path);
+        let mut parts = vec![format!("curl -X {}", self.method.as_str())];
+        for (name, value) in &self.headers {
+            if let Ok(v) = value.to_str() {
+                parts.push(format!("-H '{}: {}'", name, v));
+            }
+        }
+        if !self.query.is_empty() {
+            let qs = self.query.iter()
+                .map(|(k, v)| format!("{}={}", k, v))
+                .collect::<Vec<_>>()
+                .join("&");
+            parts.push(format!("'{}?{}'", url, qs));
+        } else {
+            parts.push(format!("'{}'", url));
+        }
+        if !self.body.is_empty() && let Ok(body_str) = std::str::from_utf8(&self.body) {
+            parts.push(format!("-d '{}'", body_str));
+        }
+        parts.join(" \\\n  ")
+    }
+
     pub async fn send(self) -> Result<RawResponse> {
         let base = self.client.resolve_base_url().await?;
         let url = self.build_url(&base);

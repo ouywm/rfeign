@@ -20,6 +20,7 @@ http = { workspace = true }
 async-trait = { workspace = true }
 serde_urlencoded = { workspace = true }
 nacos-sdk = { workspace = true, optional = true }
+rs-consul = { workspace = true, optional = true }
 
 [features]
 default = ["reqwest", "json"]
@@ -31,3 +32,8 @@ middleware = ["reqwest", "feignx-reqwest/middleware"]
 circuit-breaker = ["feignx-core/circuit-breaker"]
 middleware-full = ["retry", "tracing", "circuit-breaker"]
 nacos = ["dep:nacos-sdk"]
+consul = ["dep:rs-consul"]
+
+[dev-dependencies]
+tokio = { workspace = true }
+serde_json = { workspace = true }

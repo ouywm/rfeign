@@ -3,7 +3,7 @@ mod nacos_impl {
     use std::sync::Arc;
 
     use async_trait::async_trait;
-    use nacos_sdk::api::naming::{NamingService, NamingServiceBuilder, ServiceInstance};
+    use nacos_sdk::api::naming::{NamingService, NamingServiceBuilder};
     use nacos_sdk::api::props::ClientProps;
 
     use feignx_core::error::{Error, Result};

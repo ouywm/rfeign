@@ -64,4 +64,6 @@ define_method_macro! {
     delete,
     patch,
     head,
+    multipart,
+    timeout,
 }
