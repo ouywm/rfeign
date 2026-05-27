@@ -213,7 +213,7 @@ fn build_query_chain(params: &[Param]) -> TokenStream {
                     .query_csv(#key, &#ident)
                 }),
                 QueryFormat::Default => Some(quote! {
-                    .query_pair(#key, &rfeign::serde_urlencoded::to_string(&#ident).unwrap_or_default())
+                    .query_pair(#key, &#ident.to_string())
                 }),
             }
         })

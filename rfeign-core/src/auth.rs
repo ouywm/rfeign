@@ -12,6 +12,20 @@ pub trait Auth: Send + Sync + 'static {
     async fn authenticate(&self, request: &mut Request<Bytes>) -> Result<()>;
 }
 
+#[async_trait]
+impl Auth for Box<dyn Auth> {
+    async fn authenticate(&self, request: &mut Request<Bytes>) -> Result<()> {
+        (**self).authenticate(request).await
+    }
+}
+
+#[async_trait]
+impl Auth for Arc<dyn Auth> {
+    async fn authenticate(&self, request: &mut Request<Bytes>) -> Result<()> {
+        (**self).authenticate(request).await
+    }
+}
+
 pub struct BearerAuth {
     token: String,
 }
@@ -65,9 +79,19 @@ impl Auth for BasicAuth {
     }
 }
 
+pub trait TokenLike: Send {
+    fn access_token(&self) -> &str;
+    fn refresh_token(&self) -> Option<&str> { None }
+    fn expires_in_secs(&self) -> u64 { 3600 }
+}
+
 #[async_trait]
 pub trait TokenProvider: Send + Sync + 'static {
-    async fn fetch_token(&self) -> Result<TokenResponse>;
+    type Token: TokenLike;
+    type Refresh: TokenLike;
+
+    async fn fetch_token(&self) -> Result<Self::Token>;
+    async fn refresh(&self, refresh_token: &str) -> Result<Self::Refresh>;
 }
 
 pub struct TokenResponse {
@@ -75,25 +99,46 @@ pub struct TokenResponse {
     pub expires_in_secs: u64,
 }
 
-pub struct DynamicAuth {
-    provider: Box<dyn TokenProvider>,
+impl TokenLike for TokenResponse {
+    fn access_token(&self) -> &str { &self.access_token }
+    fn expires_in_secs(&self) -> u64 { self.expires_in_secs }
+}
+
+pub struct DynamicAuth<P: TokenProvider> {
+    provider: P,
+    header_name: String,
+    token_type: String,
     cache: Arc<RwLock<CachedToken>>,
 }
 
 struct CachedToken {
     token: String,
+    refresh_token: Option<String>,
     expires_at: Instant,
 }
 
-impl DynamicAuth {
-    pub fn new(provider: impl TokenProvider) -> Self {
+impl<P: TokenProvider> DynamicAuth<P> {
+    pub fn new(provider: P) -> Self {
         Self {
-            provider: Box::new(provider),
+            provider,
+            header_name: "Authorization".to_string(),
+            token_type: "Bearer".to_string(),
             cache: Arc::new(RwLock::new(CachedToken {
                 token: String::new(),
+                refresh_token: None,
                 expires_at: Instant::now(),
             })),
         }
+    }
+
+    pub fn header_name(mut self, name: impl Into<String>) -> Self {
+        self.header_name = name.into();
+        self
+    }
+
+    pub fn token_type(mut self, t: impl Into<String>) -> Self {
+        self.token_type = t.into();
+        self
     }
 
     async fn get_token(&self) -> Result<String> {
@@ -104,24 +149,51 @@ impl DynamicAuth {
             }
         }
 
-        let resp = self.provider.fetch_token().await?;
         let mut cached = self.cache.write().await;
-        cached.token = resp.access_token.clone();
-        cached.expires_at = Instant::now()
-            + std::time::Duration::from_secs(resp.expires_in_secs.saturating_sub(30));
-        Ok(resp.access_token)
+        if !cached.token.is_empty() && Instant::now() < cached.expires_at {
+            return Ok(cached.token.clone());
+        }
+
+        if let Some(ref rt) = cached.refresh_token {
+            let resp = self.provider.refresh(rt).await?;
+            cached.token = resp.access_token().to_string();
+            cached.refresh_token = resp.refresh_token().map(|s| s.to_string());
+            cached.expires_at = Instant::now()
+                + std::time::Duration::from_secs(
+                    resp.expires_in_secs().saturating_sub(30),
+                );
+        } else {
+            let resp = self.provider.fetch_token().await?;
+            cached.token = resp.access_token().to_string();
+            cached.refresh_token = resp.refresh_token().map(|s| s.to_string());
+            cached.expires_at = Instant::now()
+                + std::time::Duration::from_secs(
+                    resp.expires_in_secs().saturating_sub(30),
+                );
+        }
+
+        Ok(cached.token.clone())
     }
 }
 
 #[async_trait]
-impl Auth for DynamicAuth {
+impl<P: TokenProvider> Auth for DynamicAuth<P> {
     async fn authenticate(&self, request: &mut Request<Bytes>) -> Result<()> {
         let token = self.get_token().await?;
-        let value: http::HeaderValue = match format!("Bearer {}", token).parse() {
-            Ok(v) => v,
-            Err(e) => return Err(crate::error::Error::Other(e.to_string())),
+        let header_value = if self.token_type.is_empty() {
+            token
+        } else {
+            format!("{} {}", self.token_type, token)
         };
-        request.headers_mut().insert("Authorization", value);
+        let value: http::HeaderValue = header_value.parse()
+            .map_err(|e: http::header::InvalidHeaderValue| {
+                crate::error::Error::Other(e.to_string())
+            })?;
+        request.headers_mut().insert(
+            http::header::HeaderName::from_bytes(self.header_name.as_bytes())
+                .unwrap_or(http::header::AUTHORIZATION),
+            value,
+        );
         Ok(())
     }
 }

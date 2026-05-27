@@ -18,7 +18,8 @@ async-trait = { workspace = true }
 serde = { workspace = true }
 tracing = { workspace = true }
 nacos-sdk = { workspace = true, optional = true }
+summer-nacos = { workspace = true, optional = true }
 
 [features]
 default = []
-nacos = ["dep:nacos-sdk"]
+nacos = ["dep:nacos-sdk","dep:summer-nacos"]

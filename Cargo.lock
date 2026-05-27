@@ -819,6 +819,7 @@ dependencies = [
  "rfeign",
  "rfeign-core",
  "serde",
+ "serde_json",
  "summer",
  "summer-nacos",
  "summer-rfeign",
@@ -2878,6 +2879,7 @@ dependencies = [
  "rfeign-reqwest",
  "serde",
  "summer",
+ "summer-nacos",
  "tracing",
 ]
 

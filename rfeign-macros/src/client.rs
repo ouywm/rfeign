@@ -51,6 +51,20 @@ pub fn expand(attr: TokenStream, item: TokenStream) -> TokenStream {
 
     let struct_def = build_struct_def(&struct_name, vis);
 
+    let new_body = if let Some(ref svc) = client_attr.service {
+        quote! {
+            pub fn new(client: rfeign::client::Client) -> Self {
+                Self { client: client.with_service_name(#svc) }
+            }
+        }
+    } else {
+        quote! {
+            pub fn new(client: rfeign::client::Client) -> Self {
+                Self { client }
+            }
+        }
+    };
+
     let output = quote! {
         #[rfeign::async_trait]
         #clean_trait
@@ -58,9 +72,7 @@ pub fn expand(attr: TokenStream, item: TokenStream) -> TokenStream {
         #struct_def
 
         impl #struct_name {
-            pub fn new(client: rfeign::client::Client) -> Self {
-                Self { client }
-            }
+            #new_body
 
             #metadata
         }

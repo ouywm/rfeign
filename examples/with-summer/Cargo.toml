@@ -14,3 +14,4 @@ summer-web = { workspace = true }
 summer-nacos = { workspace = true }
 tokio = { workspace = true }
 serde = { workspace = true }
+serde_json = { workspace = true }

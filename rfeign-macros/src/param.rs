@@ -109,7 +109,11 @@ fn parse_query_args(attr: &syn::Attribute) -> (Option<String>, QueryFormat) {
         let tokens = list.tokens.to_string();
         for part in tokens.split(',') {
             let part = part.trim();
-            if let Some(val) = part.strip_prefix("name") {
+            if part == "multi" {
+                format = QueryFormat::Multi;
+            } else if part == "csv" {
+                format = QueryFormat::Csv;
+            } else if let Some(val) = part.strip_prefix("name") {
                 let val = val.trim().trim_start_matches('=').trim().trim_matches('"');
                 if !val.is_empty() {
                     name = Some(val.to_string());

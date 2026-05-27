@@ -49,6 +49,11 @@ impl Client {
         &self.service_name
     }
 
+    pub fn with_service_name(mut self, name: impl Into<String>) -> Self {
+        self.service_name = name.into();
+        self
+    }
+
     pub async fn resolve_base_url(&self) -> Result<String> {
         self.url_resolver.resolve(&self.service_name).await
     }
