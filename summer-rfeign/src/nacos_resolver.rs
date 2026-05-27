@@ -1,18 +1,15 @@
-use std::sync::Arc;
-
 use async_trait::async_trait;
 use nacos_sdk::api::naming::NamingService;
-use summer::plugin::ComponentRef;
 
 use rfeign_core::error::{Error, Result};
 use rfeign_core::resolver::UrlResolver;
 
 pub struct SummerNacosResolver {
-    naming: ComponentRef<NamingService>,
+    naming: NamingService,
 }
 
 impl SummerNacosResolver {
-    pub fn new(naming: ComponentRef<NamingService>) -> Self {
+    pub fn new(naming: NamingService) -> Self {
         Self { naming }
     }
 }
@@ -32,12 +29,13 @@ impl UrlResolver for SummerNacosResolver {
             .map_err(|e| Error::Resolve(e.to_string()))?;
 
         let healthy: Vec<_> = instances.iter().filter(|i| i.healthy).collect();
-        let instance = healthy
-            .first()
-            .or(instances.first())
-            .ok_or_else(|| {
+        let instance = if let Some(h) = healthy.first() {
+            *h
+        } else {
+            instances.first().ok_or_else(|| {
                 Error::Resolve(format!("no instance for {}", service_name))
-            })?;
+            })?
+        };
 
         let scheme = if instance.metadata.contains_key("secure") {
             "https"

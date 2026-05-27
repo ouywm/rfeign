@@ -45,11 +45,11 @@ async fn list_users(
     Ok(summer_web::axum::Json(users))
 }
 
-// 3. 启动应用
 #[auto_config(WebConfigurator)]
 #[tokio::main]
 async fn main() {
     App::new()
+        .add_plugin(summer_nacos::NacosPlugin)
         .add_plugin(RfeignPlugin)
         .add_plugin(WebPlugin)
         .run()

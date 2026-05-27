@@ -2,5 +2,12 @@
 port = 8080
 
 [rfeign]
-base_url = "http://localhost:9090"
 timeout_ms = 5000
+
+[nacos]
+server_addr = "127.0.0.1:8848"
+namespace = "public"
+app_name = "rfeign-example"
+enable_auth = false
+enable_config = false
+enable_naming = true

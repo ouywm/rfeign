@@ -76,7 +76,7 @@ fn build_nacos_resolver(app: &AppBuilder) -> SummerNacosResolver {
     use summer::plugin::ComponentRegistry;
 
     let naming = app
-        .get_component_ref::<NamingService>()
+        .get_component::<NamingService>()
         .expect("NamingService not found. Add NacosPlugin before RfeignPlugin.");
     SummerNacosResolver::new(naming)
 }
