@@ -11,6 +11,7 @@ members = [
     "examples/with-retry",
     "examples/with-nacos",
     "examples/file-upload",
+    "examples/with-summer",
 ]
 
 [workspace.package]

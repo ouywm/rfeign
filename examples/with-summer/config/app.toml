@@ -1,0 +1,6 @@
+[web]
+port = 8080
+
+[rfeign]
+base_url = "http://localhost:9090"
+timeout_ms = 5000

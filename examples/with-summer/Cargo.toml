@@ -1,0 +1,15 @@
+[package]
+name = "example-with-summer"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+rfeign = { path = "../../rfeign", features = ["summer"] }
+rfeign-core = { path = "../../rfeign-core" }
+summer-rfeign = { path = "../../summer-rfeign" }
+summer = "0.7"
+summer-web = "0.7"
+tokio = { workspace = true }
+serde = { workspace = true }

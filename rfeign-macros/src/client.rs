@@ -49,16 +49,13 @@ pub fn expand(attr: TokenStream, item: TokenStream) -> TokenStream {
     let methods = endpoints.iter().map(|e| method::generate(e, &class_headers));
     let metadata = build_metadata_methods(&client_attr);
 
-    let component_registration = build_summer_registration(&struct_name);
+    let struct_def = build_struct_def(&struct_name, vis);
 
     let output = quote! {
         #[rfeign::async_trait]
         #clean_trait
 
-        #[derive(Clone)]
-        #vis struct #struct_name {
-            client: rfeign::client::Client,
-        }
+        #struct_def
 
         impl #struct_name {
             pub fn new(client: rfeign::client::Client) -> Self {
@@ -72,8 +69,6 @@ pub fn expand(attr: TokenStream, item: TokenStream) -> TokenStream {
         impl #trait_name for #struct_name {
             #(#methods)*
         }
-
-        #component_registration
     };
 
     output.into()
@@ -145,26 +140,42 @@ pub fn extract_class_headers(input: &ItemTrait) -> Vec<(String, String)> {
 }
 
 #[cfg(feature = "summer")]
-fn build_summer_registration(struct_name: &syn::Ident) -> proc_macro2::TokenStream {
+fn build_struct_def(struct_name: &syn::Ident, vis: &syn::Visibility) -> proc_macro2::TokenStream {
+    let registrar_name = format_ident!("__{}_Registrar", struct_name);
     quote! {
-        impl summer_rfeign::summer::plugin::service::Service for #struct_name {
-            fn build<R>(registry: &R) -> summer_rfeign::summer::error::Result<Self>
-            where
-                R: summer_rfeign::summer::plugin::ComponentRegistry
-                    + summer_rfeign::summer::config::ConfigRegistry,
-            {
-                let client = registry
+        #[derive(Clone)]
+        #vis struct #struct_name {
+            client: rfeign::client::Client,
+        }
+
+        #[allow(non_camel_case_types)]
+        struct #registrar_name;
+
+        impl summer_rfeign::summer::plugin::service::ServiceRegistrar for #registrar_name {
+            fn install_service(
+                &self,
+                app: &mut summer_rfeign::summer::app::AppBuilder,
+            ) -> summer_rfeign::summer::error::Result<()> {
+                use summer_rfeign::summer::plugin::ComponentRegistry;
+                use summer_rfeign::summer::plugin::MutableComponentRegistry;
+                let client = app
                     .get_component::<rfeign::client::Client>()
                     .expect("rfeign Client not registered. Add RfeignPlugin first.");
-                Ok(Self::new(client))
+                app.add_component(#struct_name::new(client));
+                Ok(())
             }
         }
 
-        summer_rfeign::summer::submit_service!(#struct_name);
+        summer_rfeign::summer::submit_service!(#registrar_name);
     }
 }
 
 #[cfg(not(feature = "summer"))]
-fn build_summer_registration(_struct_name: &syn::Ident) -> proc_macro2::TokenStream {
-    quote! {}
+fn build_struct_def(struct_name: &syn::Ident, vis: &syn::Visibility) -> proc_macro2::TokenStream {
+    quote! {
+        #[derive(Clone)]
+        #vis struct #struct_name {
+            client: rfeign::client::Client,
+        }
+    }
 }
