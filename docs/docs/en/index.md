@@ -7,7 +7,7 @@ hero:
   actions:
     - theme: brand
       text: Getting Started
-      link: /en/guide/getting-started
+      link: /en/getting-started
     - theme: alt
       text: GitHub
       link: https://github.com/ouywm/rfeign
